@@ -545,81 +545,6 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
             </View>
           </View>
 
-          {/* Backup & Restore Section */}
-          <View
-            style={[
-              styles.sectionCard,
-              { backgroundColor: theme.card, borderColor: theme.cardBorder },
-            ]}
-          >
-            <View style={styles.sectionHeaderRow}>
-              <View style={styles.sectionTitleRow}>
-                <Ionicons
-                  name="cloud-download-outline"
-                  size={18}
-                  color="#10B981"
-                />
-                <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                  Data Backup & Restore
-                </Text>
-              </View>
-            </View>
-            <Text style={[styles.sectionDesc, { color: theme.textSecondary }]}>
-              Export your tasks into a JSON file to transfer between devices, or
-              restore an existing backup.
-            </Text>
-
-            <View style={styles.actionsRow}>
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel="Export backup"
-                activeOpacity={0.75}
-                onPress={handleExportBackup}
-                style={[
-                  styles.actionBtn,
-                  {
-                    backgroundColor:
-                      colorScheme === "dark" ? "#064E3B" : "#ECFDF5",
-                  },
-                ]}
-              >
-                <Ionicons
-                  name={
-                    copiedBackup ? "checkmark-circle" : "cloud-upload-outline"
-                  }
-                  size={15}
-                  color="#10B981"
-                />
-                <Text style={[styles.actionBtnText, { color: "#10B981" }]}>
-                  {copiedBackup ? "JSON Copied!" : "Export JSON"}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel="Restore backup"
-                activeOpacity={0.75}
-                onPress={handleOpenImport}
-                style={[
-                  styles.actionBtn,
-                  {
-                    backgroundColor:
-                      colorScheme === "dark" ? "#1E293B" : "#F1F5F9",
-                  },
-                ]}
-              >
-                <Ionicons
-                  name="download-outline"
-                  size={15}
-                  color={theme.text}
-                />
-                <Text style={[styles.actionBtnText, { color: theme.text }]}>
-                  Import JSON
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
           {/* Recycle Bin Section */}
           <View
             style={[
@@ -701,6 +626,81 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
               </View>
               <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
             </TouchableOpacity>
+          </View>
+
+          {/* Backup & Restore Section (Last) */}
+          <View
+            style={[
+              styles.sectionCard,
+              { backgroundColor: theme.card, borderColor: theme.cardBorder },
+            ]}
+          >
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionTitleRow}>
+                <Ionicons
+                  name="cloud-download-outline"
+                  size={18}
+                  color="#10B981"
+                />
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>
+                  Data Backup & Restore
+                </Text>
+              </View>
+            </View>
+            <Text style={[styles.sectionDesc, { color: theme.textSecondary }]}>
+              Export your tasks into a JSON file to transfer between devices, or
+              restore an existing backup.
+            </Text>
+
+            <View style={styles.actionsRow}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Export backup"
+                activeOpacity={0.75}
+                onPress={handleExportBackup}
+                style={[
+                  styles.actionBtn,
+                  {
+                    backgroundColor:
+                      colorScheme === "dark" ? "#064E3B" : "#ECFDF5",
+                  },
+                ]}
+              >
+                <Ionicons
+                  name={
+                    copiedBackup ? "checkmark-circle" : "cloud-upload-outline"
+                  }
+                  size={15}
+                  color="#10B981"
+                />
+                <Text style={[styles.actionBtnText, { color: "#10B981" }]}>
+                  {copiedBackup ? "JSON Copied!" : "Export JSON"}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Restore backup"
+                activeOpacity={0.75}
+                onPress={handleOpenImport}
+                style={[
+                  styles.actionBtn,
+                  {
+                    backgroundColor:
+                      colorScheme === "dark" ? "#1E293B" : "#F1F5F9",
+                  },
+                ]}
+              >
+                <Ionicons
+                  name="download-outline"
+                  size={15}
+                  color={theme.text}
+                />
+                <Text style={[styles.actionBtnText, { color: theme.text }]}>
+                  Import JSON
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
 
