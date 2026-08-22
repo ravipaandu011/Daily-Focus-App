@@ -117,7 +117,7 @@ const DynamicBottomTabBarComponent: React.FC = () => {
             return (
               <TouchableOpacity
                 key={key}
-                activeOpacity={0.75}
+                activeOpacity={0.85}
                 onPress={() => handleSelectTab(key)}
                 onLongPress={() => handleLongPressTab(key, conf.tabLabel)}
                 delayLongPress={350}
@@ -129,19 +129,19 @@ const DynamicBottomTabBarComponent: React.FC = () => {
                     end={{ x: 1, y: 1 }}
                     style={[styles.focusedIconWrapper, { shadowColor: conf.color }]}>
                     {isCustom ? (
-                      <Text style={styles.focusedEmoji}>{conf.emoji}</Text>
+                      <Text style={styles.tabEmoji}>{conf.emoji}</Text>
                     ) : (
-                      <Ionicons name={conf.activeIconName} size={18} color="#FFFFFF" />
+                      <Ionicons name={conf.activeIconName} size={19} color="#FFFFFF" />
                     )}
                   </LinearGradient>
                 ) : (
                   <View style={styles.inactiveIconWrapper}>
                     {isCustom ? (
-                      <Text style={styles.inactiveEmoji}>{conf.emoji}</Text>
+                      <Text style={[styles.tabEmoji, { opacity: 0.65 }]}>{conf.emoji}</Text>
                     ) : (
                       <Ionicons
                         name={conf.iconName}
-                        size={20}
+                        size={19}
                         color={isDark ? '#64748B' : '#94A3B8'}
                       />
                     )}
@@ -152,7 +152,6 @@ const DynamicBottomTabBarComponent: React.FC = () => {
                     styles.tabLabel,
                     {
                       color: isFocused ? conf.color : isDark ? '#64748B' : '#94A3B8',
-                      fontWeight: isFocused ? '700' : '500',
                     },
                   ]}
                   numberOfLines={1}>
@@ -362,7 +361,7 @@ const styles = StyleSheet.create({
   tabItem: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     minWidth: 54,
     paddingVertical: 2,
   },
@@ -380,29 +379,29 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   inactiveIconWrapper: {
-    width: 38,
+    width: 44,
     height: 32,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1.2,
+    borderColor: 'transparent',
   },
   addIconWrapper: {
-    width: 38,
+    width: 44,
     height: 32,
     borderRadius: 16,
-    borderWidth: 1,
+    borderWidth: 1.2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  focusedEmoji: {
+  tabEmoji: {
     fontSize: 16,
-  },
-  inactiveEmoji: {
-    fontSize: 17,
-    opacity: 0.65,
+    textAlign: 'center',
   },
   tabLabel: {
     fontSize: 10,
+    fontWeight: '600',
     marginTop: 3,
     textAlign: 'center',
   },
