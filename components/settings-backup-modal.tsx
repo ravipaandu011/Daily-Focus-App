@@ -27,7 +27,6 @@ import {
   getReminderSettings,
   setDailyReminder,
   formatTime12Hour,
-  sendTestNotification,
 } from "@/utils/notifications";
 import { useAuth } from "@/context/auth-context";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -91,9 +90,6 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
     initialTime: "09:00",
     presets: [],
   });
-
-  const [testNotifSending, setTestNotifSending] = useState(false);
-  const [testNotifStatus, setTestNotifStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (visible) {
@@ -174,23 +170,6 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
       if (eveningReminder) {
         await setDailyReminder("evening", true, newTime);
       }
-    }
-  };
-
-  const handleSendTestNotification = async () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-    setTestNotifSending(true);
-    setTestNotifStatus(null);
-    const success = await sendTestNotification();
-    setTestNotifSending(false);
-    if (success) {
-      setTestNotifStatus("Notification sent! Check your notification tray 📲");
-      setTimeout(() => setTestNotifStatus(null), 4500);
-    } else {
-      setTestNotifStatus("Permission required: Please enable notifications in device settings.");
-      setTimeout(() => setTestNotifStatus(null), 5000);
     }
   };
 
@@ -563,56 +542,6 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
                   </View>
                 </TouchableOpacity>
               </View>
-
-              <View
-                style={[
-                  styles.notifDivider,
-                  { backgroundColor: theme.cardBorder },
-                ]}
-              />
-
-              {/* Instant Test Push Notification Action */}
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel="Send instant test notification"
-                activeOpacity={0.8}
-                onPress={handleSendTestNotification}
-                disabled={testNotifSending}
-                style={[
-                  styles.testNotifBtn,
-                  {
-                    backgroundColor:
-                      colorScheme === "dark" ? "#1E293B" : "#F8FAFC",
-                    borderColor: theme.cardBorder,
-                  },
-                ]}
-              >
-                <Ionicons
-                  name={testNotifSending ? "hourglass-outline" : "notifications"}
-                  size={16}
-                  color="#8B5CF6"
-                />
-                <Text style={[styles.testNotifBtnText, { color: theme.text }]}>
-                  {testNotifSending
-                    ? "Sending Notification..."
-                    : "🔔 Send Instant Test Notification"}
-                </Text>
-              </TouchableOpacity>
-
-              {testNotifStatus && (
-                <Text
-                  style={[
-                    styles.testNotifStatusText,
-                    {
-                      color: testNotifStatus.includes("sent")
-                        ? "#10B981"
-                        : "#EF4444",
-                    },
-                  ]}
-                >
-                  {testNotifStatus}
-                </Text>
-              )}
             </View>
           </View>
 
