@@ -203,9 +203,9 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    height: 46,
-    borderRadius: 9999,
+    paddingHorizontal: 14,
+    height: 44,
+    borderRadius: 16,
     borderWidth: 1,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   },
   chipActive: {
     paddingVertical: 9,
-    borderRadius: 9999,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   },
   chipInactive: {
     paddingVertical: 9,
-    borderRadius: 9999,
+    borderRadius: 14,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
@@ -254,10 +254,12 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "700",
+    letterSpacing: -0.1,
   },
   chipTextInactive: {
     fontSize: 12,
     fontWeight: "600",
+    letterSpacing: -0.1,
   },
 });
 

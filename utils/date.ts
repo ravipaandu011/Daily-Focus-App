@@ -58,3 +58,30 @@ export function formatDateForDisplay(dateKey: string): string {
   }
   return formatted;
 }
+
+export function formatMonthYear(dateKey: string): string {
+  const date = parseDateKey(dateKey);
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
+export function getDateParts(dateKey: string): {
+  weekday: string;
+  dayNumber: string;
+  month: string;
+  relative: string | null;
+} {
+  const date = parseDateKey(dateKey);
+  const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
+  const dayNumber = String(date.getDate());
+  const month = date.toLocaleDateString('en-US', { month: 'short' });
+  const relative = getRelativeDayLabel(dateKey);
+  return { weekday, dayNumber, month, relative };
+}
+
+export function getSurroundingDateKeys(centerDateKey: string, pastDays = 3, futureDays = 10): string[] {
+  const keys: string[] = [];
+  for (let i = -pastDays; i <= futureDays; i++) {
+    keys.push(addDaysToDateKey(centerDateKey, i));
+  }
+  return keys;
+}
