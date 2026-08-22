@@ -107,80 +107,112 @@ export const TaskList: React.FC<TaskListProps> = ({
     }
   };
 
-  // Toolbar Action Handlers (strictly operate on selected tasks only)
+  // Toolbar Action Handlers
+  const targetItem = activeItem || todos.find((t) => !t.completed) || todos[0] || null;
+
   const handleToolbarFocus = () => {
-    if (!activeItem) return;
+    if (!targetItem) return;
     if (Platform.OS !== 'web') {
       Haptics.selectionAsync();
     }
-    onStartTimer(activeItem);
+    onStartTimer(targetItem);
   };
 
   const handleToolbarPin = () => {
-    if (!activeItem) return;
-    if (Platform.OS !== 'web') {
-      Haptics.selectionAsync();
+    if (hasSelection) {
+      if (Platform.OS !== 'web') {
+        Haptics.selectionAsync();
+      }
+      if (activeItem) {
+        onTogglePin(activeItem.id);
+      } else {
+        selectedIds.forEach((id) => onTogglePin(id));
+      }
+    } else if (targetItem) {
+      if (Platform.OS !== 'web') {
+        Haptics.selectionAsync();
+      }
+      onTogglePin(targetItem.id);
     }
-    onTogglePin(activeItem.id);
   };
 
   const handleToolbarTomorrow = () => {
-    if (!hasSelection) return;
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-    if (selectedIds.size > 1 && onMoveBatchToTomorrow) {
-      onMoveBatchToTomorrow(Array.from(selectedIds));
-      setSelectedIds(new Set());
-    } else if (activeItem) {
-      onMoveToTomorrow(activeItem.id);
-      setSelectedIds(new Set());
+    if (hasSelection) {
+      if (selectedIds.size > 1 && onMoveBatchToTomorrow) {
+        onMoveBatchToTomorrow(Array.from(selectedIds));
+        setSelectedIds(new Set());
+      } else if (activeItem) {
+        onMoveToTomorrow(activeItem.id);
+        setSelectedIds(new Set());
+      }
+    } else if (onMoveBatchToTomorrow) {
+      const pendingIds = todos.filter((t) => !t.completed).map((t) => t.id);
+      if (pendingIds.length > 0) {
+        onMoveBatchToTomorrow(pendingIds);
+      } else if (targetItem) {
+        onMoveToTomorrow(targetItem.id);
+      }
+    } else if (targetItem) {
+      onMoveToTomorrow(targetItem.id);
     }
   };
 
   const handleToolbarTransfer = () => {
-    if (!activeItem) return;
+    if (!targetItem) return;
     if (Platform.OS !== 'web') {
       Haptics.selectionAsync();
     }
-    onOpenTransfer(activeItem);
+    onOpenTransfer(targetItem);
   };
 
   const handleToolbarEdit = () => {
-    if (!activeItem) return;
+    if (!targetItem) return;
     if (Platform.OS !== 'web') {
       Haptics.selectionAsync();
     }
-    onEdit(activeItem);
+    onEdit(targetItem);
   };
 
   const handleToolbarDelete = () => {
-    if (!hasSelection) return;
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    if (selectedIds.size > 1 && onDeleteBatch) {
-      onDeleteBatch(Array.from(selectedIds));
-      setSelectedIds(new Set());
-    } else if (activeItem) {
-      onDelete(activeItem.id);
-      setSelectedIds(new Set());
+    if (hasSelection) {
+      if (selectedIds.size > 1 && onDeleteBatch) {
+        onDeleteBatch(Array.from(selectedIds));
+        setSelectedIds(new Set());
+      } else if (activeItem) {
+        onDelete(activeItem.id);
+        setSelectedIds(new Set());
+      }
+    } else if (onDeleteBatch && todos.length > 1) {
+      onDeleteBatch(todos.map((t) => t.id));
+    } else if (targetItem) {
+      onDelete(targetItem.id);
     }
   };
 
   const handleToolbarComplete = () => {
-    if (!hasSelection) return;
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-    if (selectedIds.size > 1 && onToggleBatchComplete) {
-      const allSelectedAreCompleted = Array.from(selectedIds).every(
-        (id) => todos.find((t) => t.id === id)?.completed
-      );
-      onToggleBatchComplete(Array.from(selectedIds), !allSelectedAreCompleted);
-      setSelectedIds(new Set());
-    } else if (activeItem) {
-      onToggle(activeItem.id);
+    if (hasSelection) {
+      if (selectedIds.size > 1 && onToggleBatchComplete) {
+        const allSelectedAreCompleted = Array.from(selectedIds).every(
+          (id) => todos.find((t) => t.id === id)?.completed
+        );
+        onToggleBatchComplete(Array.from(selectedIds), !allSelectedAreCompleted);
+      } else if (activeItem) {
+        onToggle(activeItem.id);
+      }
+    } else if (onToggleBatchComplete && todos.length > 0) {
+      const allAreCompleted = todos.every((t) => t.completed);
+      onToggleBatchComplete(todos.map((t) => t.id), !allAreCompleted);
+    } else if (targetItem) {
+      onToggle(targetItem.id);
     }
   };
 
@@ -282,8 +314,8 @@ export const TaskList: React.FC<TaskListProps> = ({
             )}
           </View>
 
-          {/* Contextual Action Bar: Glassmorphic Acrylic Pill (Matching Image Sheen) */}
-          {hasSelection && (
+          {/* Glassmorphic Acrylic Action Bar: shown by default when tasks exist */}
+          {todos.length > 0 && (
             <View
               style={[
                 styles.glassActionContainer,
