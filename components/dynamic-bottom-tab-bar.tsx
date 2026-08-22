@@ -352,17 +352,18 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
   },
   scrollContent: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
     minWidth: '100%',
+    gap: 2,
   },
   tabItem: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 8,
-    minWidth: 54,
+    paddingHorizontal: 3,
+    minWidth: 48,
     paddingVertical: 2,
   },
   focusedIconWrapper: {
