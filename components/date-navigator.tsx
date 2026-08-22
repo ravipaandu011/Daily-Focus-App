@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingTop: 8,
     paddingBottom: 8,
-    borderRadius: 18,
+    borderRadius: 24,
     borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     marginBottom: 6,
   },
   monthSelectorTouch: {
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   calendarIconBtn: {
     width: 26,
     height: 26,
-    borderRadius: 13,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   dateChipActive: {
     width: CHIP_WIDTH,
     height: 50,
-    borderRadius: 12,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 2,
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   dateChipInactive: {
     width: CHIP_WIDTH,
     height: 50,
-    borderRadius: 12,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 2,

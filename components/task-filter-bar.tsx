@@ -203,9 +203,9 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     height: 44,
-    borderRadius: 16,
+    borderRadius: 9999,
     borderWidth: 1,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   },
   chipActive: {
     paddingVertical: 9,
-    borderRadius: 14,
+    borderRadius: 9999,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   },
   chipInactive: {
     paddingVertical: 9,
-    borderRadius: 14,
+    borderRadius: 9999,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
