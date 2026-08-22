@@ -182,10 +182,10 @@ const DynamicBottomTabBarComponent: React.FC = () => {
                   borderColor: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)',
                 },
               ]}>
-              <Ionicons name="add" size={19} color="#3B82F6" />
+              <Ionicons name="folder-open-outline" size={17} color="#3B82F6" />
             </View>
             <Text style={[styles.tabLabel, { color: '#3B82F6', fontWeight: '600' }]}>
-              Add
+              + List
             </Text>
           </TouchableOpacity>
         </ScrollView>

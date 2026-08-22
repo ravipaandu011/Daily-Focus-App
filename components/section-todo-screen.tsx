@@ -112,6 +112,7 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
   const [focusItem, setFocusItem] = useState<TodoItem | null>(null);
   const [transferItem, setTransferItem] = useState<TodoItem | null>(null);
   const [editingItem, setEditingItem] = useState<TodoItem | null>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const isToday = selectedDate === getTodayKey();
   const pastPending = useMemo(() => getPastPendingTasks(activeSection), [getPastPendingTasks, activeSection]);
@@ -279,23 +280,37 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
             <Ionicons name="trophy-outline" size={15} color="#3B82F6" />
           </TouchableOpacity>
 
-          {/* Recycle Bin Button */}
+          {/* Collapsible Search Toggle Button */}
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel="Open Recycle Bin"
+            accessibilityLabel="Toggle Search"
             activeOpacity={0.75}
-            onPress={handleOpenBinModal}
-            style={[styles.headerIconBtn, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+            onPress={() => {
+              if (Platform.OS !== 'web') {
+                Haptics.selectionAsync();
+              }
+              setIsSearchOpen((prev) => !prev);
+            }}
+            style={[
+              styles.headerIconBtn,
+              {
+                backgroundColor:
+                  isSearchOpen || searchQuery
+                    ? colorScheme === 'dark'
+                      ? '#1E293B'
+                      : '#F1F5F9'
+                    : theme.card,
+                borderColor:
+                  isSearchOpen || searchQuery ? sectionConfig.color : theme.cardBorder,
+              },
+            ]}>
             <Ionicons
-              name="trash-outline"
+              name="search-outline"
               size={15}
-              color={binTodos.length > 0 ? '#EF4444' : theme.textSecondary}
+              color={
+                isSearchOpen || searchQuery ? sectionConfig.color : theme.textSecondary
+              }
             />
-            {binTodos.length > 0 && (
-              <View style={styles.binBadge}>
-                <Text style={styles.binBadgeText}>{binTodos.length}</Text>
-              </View>
-            )}
           </TouchableOpacity>
 
           {/* Settings & Hub Button (LAST) */}
@@ -359,6 +374,8 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
                 totalCount={totalCount}
                 pendingCount={pendingCount}
                 completedCount={completedCount}
+                isSearchVisible={isSearchOpen}
+                onCloseSearch={() => setIsSearchOpen(false)}
               />
             </>
           }
@@ -482,6 +499,7 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
         onClose={() => setSettingsModalVisible(false)}
         onImportBackup={importBackupData}
         onOpenAuth={promptAuthModal}
+        onOpenBin={() => setBinModalVisible(true)}
       />
 
       {/* Custom Category Manager Modal */}

@@ -24,6 +24,8 @@ interface TaskFilterBarProps {
   totalCount: number;
   pendingCount: number;
   completedCount: number;
+  isSearchVisible?: boolean;
+  onCloseSearch?: () => void;
 }
 
 const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
@@ -35,9 +37,13 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
   totalCount,
   pendingCount,
   completedCount,
+  isSearchVisible = false,
+  onCloseSearch,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
+
+  const showSearch = isSearchVisible || searchQuery.length > 0;
 
   const handleSelectFilter = (f: StatusFilter) => {
     if (Platform.OS !== "web") {
@@ -46,43 +52,49 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
     onStatusFilterChange(f);
   };
 
+  const handleClearSearch = () => {
+    onSearchChange("");
+    onCloseSearch?.();
+  };
+
   return (
     <View style={styles.container}>
-      {/* Search Input Bar with Material Pill Radius */}
-      <View
-        style={[
-          styles.searchBar,
-          {
-            backgroundColor: theme.card,
-            borderColor: theme.cardBorder,
-          },
-        ]}
-      >
-        <Ionicons
-          name="search-outline"
-          size={17}
-          color={theme.textSecondary}
-          style={styles.searchIcon}
-        />
-        <TextInput
-          value={searchQuery}
-          onChangeText={onSearchChange}
-          placeholder="Search tasks..."
-          placeholderTextColor={theme.textMuted}
-          style={[styles.searchInput, { color: theme.text }]}
-          returnKeyType="search"
-          clearButtonMode="while-editing"
-        />
-        {searchQuery.length > 0 && (
+      {/* Collapsible Search Input Bar with Material Pill Radius */}
+      {showSearch && (
+        <View
+          style={[
+            styles.searchBar,
+            {
+              backgroundColor: theme.card,
+              borderColor: theme.cardBorder,
+            },
+          ]}
+        >
+          <Ionicons
+            name="search-outline"
+            size={17}
+            color={sectionConfig.color}
+            style={styles.searchIcon}
+          />
+          <TextInput
+            value={searchQuery}
+            onChangeText={onSearchChange}
+            placeholder="Search tasks..."
+            placeholderTextColor={theme.textMuted}
+            style={[styles.searchInput, { color: theme.text }]}
+            returnKeyType="search"
+            autoFocus={true}
+            clearButtonMode="while-editing"
+          />
           <TouchableOpacity
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            onPress={() => onSearchChange("")}
+            onPress={handleClearSearch}
             style={styles.clearBtn}
           >
-            <Ionicons name="close-circle" size={16} color={theme.textMuted} />
+            <Ionicons name="close-circle" size={17} color={theme.textMuted} />
           </TouchableOpacity>
-        )}
-      </View>
+        </View>
+      )}
 
       {/* Filter Status Chips Row */}
       <View style={styles.filterChipsRow}>
@@ -273,6 +285,7 @@ export const TaskFilterBar = React.memo(
       prev.totalCount === next.totalCount &&
       prev.pendingCount === next.pendingCount &&
       prev.completedCount === next.completedCount &&
+      prev.isSearchVisible === next.isSearchVisible &&
       prev.sectionConfig.color === next.sectionConfig.color
     );
   },

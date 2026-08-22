@@ -41,6 +41,7 @@ interface SettingsBackupModalProps {
   onClose: () => void;
   onImportBackup: (todos: TodoItem[], binTodos: TodoItem[]) => Promise<void>;
   onOpenAuth?: () => void;
+  onOpenBin?: () => void;
 }
 
 export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
@@ -50,6 +51,7 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
   onClose,
   onImportBackup,
   onOpenAuth,
+  onOpenBin,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
@@ -766,6 +768,89 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
                 </Text>
               </TouchableOpacity>
             </View>
+          </View>
+
+          {/* Recycle Bin Section */}
+          <View
+            style={[
+              styles.sectionCard,
+              { backgroundColor: theme.card, borderColor: theme.cardBorder },
+            ]}
+          >
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionTitleRow}>
+                <Ionicons
+                  name="trash-outline"
+                  size={18}
+                  color="#EF4444"
+                />
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>
+                  Recycle Bin
+                </Text>
+              </View>
+              {binTodos.length > 0 && (
+                <View
+                  style={{
+                    backgroundColor: "rgba(239, 68, 68, 0.15)",
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                    borderRadius: 9999,
+                    borderWidth: 1,
+                    borderColor: "rgba(239, 68, 68, 0.3)",
+                  }}
+                >
+                  <Text style={{ color: "#EF4444", fontSize: 11, fontWeight: "700" }}>
+                    {binTodos.length} items
+                  </Text>
+                </View>
+              )}
+            </View>
+            <Text style={[styles.sectionDesc, { color: theme.textSecondary }]}>
+              {binTodos.length > 0
+                ? `${binTodos.length} deleted task${binTodos.length > 1 ? "s" : ""} available to restore or delete permanently.`
+                : "Deleted tasks are safely stored here for recovery before permanent deletion."}
+            </Text>
+
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Open Recycle Bin"
+              activeOpacity={0.75}
+              onPress={() => {
+                onClose();
+                onOpenBin?.();
+              }}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: theme.cardBorder,
+                backgroundColor: colorScheme === "dark" ? "#1E293B" : "#F8FAFC",
+                marginTop: 4,
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <View
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
+                    backgroundColor: "rgba(239, 68, 68, 0.12)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Ionicons name="trash-bin-outline" size={17} color="#EF4444" />
+                </View>
+                <Text style={{ fontSize: 14, fontWeight: "600", color: theme.text }}>
+                  View Deleted Tasks
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
+            </TouchableOpacity>
           </View>
         </ScrollView>
 
