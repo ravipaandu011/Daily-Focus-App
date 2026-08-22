@@ -27,8 +27,8 @@ interface DateNavigatorProps {
   onOpenCalendar?: () => void;
 }
 
-const CHIP_WIDTH = 48;
-const CHIP_GAP = 7;
+const CHIP_WIDTH = 44;
+const CHIP_GAP = 6;
 
 const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
   selectedDate,
@@ -92,9 +92,9 @@ const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
           </Text>
           <Ionicons
             name="chevron-down"
-            size={14}
+            size={13}
             color={theme.textSecondary}
-            style={{ marginLeft: 4 }}
+            style={{ marginLeft: 3 }}
           />
         </TouchableOpacity>
 
@@ -104,7 +104,7 @@ const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
           activeOpacity={0.75}
           onPress={handleCalendarPress}
           style={[styles.calendarIconBtn, { backgroundColor: theme.inputBg }]}>
-          <Ionicons name="calendar-outline" size={17} color={sectionConfig.color} />
+          <Ionicons name="calendar-outline" size={15} color={sectionConfig.color} />
         </TouchableOpacity>
       </View>
 
@@ -118,7 +118,7 @@ const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
         {dateKeys.map((dateKey) => {
           const isSelected = dateKey === selectedDate;
           const isToday = dateKey === today;
-          const { weekday, dayNumber, month } = getDateParts(dateKey);
+          const { weekday, dayNumber } = getDateParts(dateKey);
 
           return (
             <TouchableOpacity
@@ -141,7 +141,6 @@ const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
                     {isToday ? 'Today' : weekday}
                   </Text>
                   <Text style={styles.dayNumberActive}>{dayNumber}</Text>
-                  <Text style={styles.monthTextActive}>{month}</Text>
                 </LinearGradient>
               ) : (
                 <View
@@ -163,9 +162,6 @@ const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
                   <Text style={[styles.dayNumberInactive, { color: theme.text }]}>
                     {dayNumber}
                   </Text>
-                  <Text style={[styles.monthTextInactive, { color: theme.textMuted }]}>
-                    {month}
-                  </Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -179,10 +175,10 @@ const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
 const styles = StyleSheet.create({
   cardContainer: {
     marginHorizontal: 16,
-    marginBottom: 10,
-    paddingTop: 10,
-    paddingBottom: 10,
-    borderRadius: 20,
+    marginBottom: 8,
+    paddingTop: 8,
+    paddingBottom: 8,
+    borderRadius: 18,
     borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -194,8 +190,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    marginBottom: 8,
+    paddingHorizontal: 12,
+    marginBottom: 6,
   },
   monthSelectorTouch: {
     flexDirection: 'row',
@@ -203,19 +199,19 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   monthYearTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
     letterSpacing: -0.3,
   },
   calendarIconBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
   ribbonScroll: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     gap: CHIP_GAP,
     alignItems: 'center',
   },
@@ -224,27 +220,27 @@ const styles = StyleSheet.create({
   },
   dateChipActive: {
     width: CHIP_WIDTH,
-    height: 60,
-    borderRadius: 14,
+    height: 50,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 3,
-    shadowOffset: { width: 0, height: 3 },
+    paddingVertical: 2,
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
-    shadowRadius: 6,
+    shadowRadius: 4,
     elevation: 3,
   },
   dateChipInactive: {
     width: CHIP_WIDTH,
-    height: 60,
-    borderRadius: 14,
+    height: 50,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 3,
+    paddingVertical: 2,
   },
   weekdayTextActive: {
     color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 9.5,
+    fontSize: 9,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.2,
@@ -252,34 +248,23 @@ const styles = StyleSheet.create({
   },
   dayNumberActive: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '900',
     letterSpacing: -0.3,
-    lineHeight: 19,
-  },
-  monthTextActive: {
-    color: 'rgba(255, 255, 255, 0.85)',
-    fontSize: 9.5,
-    fontWeight: '600',
-    marginTop: 1,
+    lineHeight: 18,
   },
   weekdayTextInactive: {
-    fontSize: 9.5,
+    fontSize: 9,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.2,
     marginBottom: 1,
   },
   dayNumberInactive: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
     letterSpacing: -0.3,
-    lineHeight: 19,
-  },
-  monthTextInactive: {
-    fontSize: 9.5,
-    fontWeight: '500',
-    marginTop: 1,
+    lineHeight: 18,
   },
 });
 
