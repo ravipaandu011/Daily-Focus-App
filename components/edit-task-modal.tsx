@@ -6,11 +6,11 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
   ScrollView,
   BackHandler,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -124,6 +124,27 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
     onClose();
   };
 
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   const handleClose = React.useCallback(() => {
     inputRef.current?.blur();
     onClose();
@@ -147,20 +168,17 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
       transparent={true}
       statusBarTranslucent={true}
       onRequestClose={handleClose}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.keyboardAvoid}>
-        <TouchableWithoutFeedback onPress={handleClose}>
-          <View style={styles.backdrop}>
-            <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-              <View
-                style={[
-                  styles.modalContent,
-                  {
-                    backgroundColor: theme.card,
-                    borderColor: theme.cardBorder,
-                  },
-                ]}>
+      <TouchableWithoutFeedback onPress={handleClose}>
+        <View style={[styles.backdrop, { paddingBottom: keyboardHeight }]}>
+          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+            <View
+              style={[
+                styles.modalContent,
+                {
+                  backgroundColor: theme.card,
+                  borderColor: theme.cardBorder,
+                },
+              ]}>
                 {/* Header */}
                 <View style={styles.headerRow}>
                   <View style={styles.titleContainer}>
@@ -329,7 +347,6 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
     </Modal>
   );
 };
