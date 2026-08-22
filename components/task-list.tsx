@@ -314,39 +314,20 @@ export const TaskList: React.FC<TaskListProps> = ({
             )}
           </View>
 
-          {/* Contextual Action Bar: Crystal Clear Glassmorphic Pill */}
+          {/* Action Bar: clean solid rounded stadium pill */}
           {todos.length > 0 && (
             <View
               style={[
                 styles.glassActionContainer,
                 {
+                  backgroundColor:
+                    colorScheme === 'dark' ? '#1E293B' : 'rgba(255, 255, 255, 0.95)',
                   borderColor:
-                    colorScheme === 'dark'
-                      ? 'rgba(255, 255, 255, 0.22)'
-                      : 'rgba(255, 255, 255, 0.65)',
+                    colorScheme === 'dark' ? '#334155' : 'rgba(255, 255, 255, 0.90)',
                   shadowColor: colorScheme === 'dark' ? '#000000' : '#64748B',
                 },
               ]}>
-              <LinearGradient
-                colors={
-                  colorScheme === 'dark'
-                    ? [
-                      'rgba(255, 255, 255, 0.12)',
-                      'rgba(255, 255, 255, 0.02)',
-                      'rgba(255, 255, 255, 0.09)',
-                      'rgba(255, 255, 255, 0.02)',
-                    ]
-                    : [
-                      'rgba(255, 255, 255, 0.9)',
-                      'rgba(255, 255, 255, 0.9)',
-                      'rgba(255, 255, 255, 0.9)',
-                      'rgba(255, 255, 255, 0.9)',
-                    ]
-                }
-                locations={[0, 0.38, 0.68, 1]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.glassActionGradient}>
+              <View style={styles.glassActionGradient}>
                 {/* 1. Mark Done / Pending */}
                 <TouchableOpacity
                   activeOpacity={0.7}
@@ -425,7 +406,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                   <Ionicons name="trash-outline" size={16} color="#EF4444" />
                   <Text style={[styles.actionBtnLabel, { color: '#EF4444' }]}>Delete</Text>
                 </TouchableOpacity>
-              </LinearGradient>
+              </View>
             </View>
           )}
         </>
