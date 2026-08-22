@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -42,8 +42,9 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
 }) => {
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
+  const [internalSearchOpen, setInternalSearchOpen] = useState(false);
 
-  const showSearch = isSearchVisible || searchQuery.length > 0;
+  const showSearch = isSearchVisible || internalSearchOpen || searchQuery.length > 0;
 
   const handleSelectFilter = (f: StatusFilter) => {
     if (Platform.OS !== "web") {
@@ -52,14 +53,28 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
     onStatusFilterChange(f);
   };
 
+  const handleToggleSearch = () => {
+    if (Platform.OS !== "web") {
+      Haptics.selectionAsync();
+    }
+    if (showSearch) {
+      onSearchChange("");
+      setInternalSearchOpen(false);
+      onCloseSearch?.();
+    } else {
+      setInternalSearchOpen(true);
+    }
+  };
+
   const handleClearSearch = () => {
     onSearchChange("");
+    setInternalSearchOpen(false);
     onCloseSearch?.();
   };
 
   return (
     <View style={styles.container}>
-      {/* Collapsible Search Input Bar with Material Pill Radius */}
+      {/* Collapsible Search Input Bar */}
       {showSearch && (
         <View
           style={[
@@ -96,7 +111,7 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
         </View>
       )}
 
-      {/* Filter Status Chips Row */}
+      {/* Filter Status Chips Row + Search Pill */}
       <View style={styles.filterChipsRow}>
         {/* All Chip */}
         <TouchableOpacity
@@ -201,6 +216,42 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
             </View>
           )}
         </TouchableOpacity>
+
+        {/* Search Pill Button */}
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Toggle search"
+          activeOpacity={0.8}
+          onPress={handleToggleSearch}
+          style={styles.searchPillTouchable}
+        >
+          {showSearch ? (
+            <LinearGradient
+              colors={sectionConfig.gradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[
+                styles.searchPillActive,
+                { shadowColor: sectionConfig.color },
+              ]}
+            >
+              <Ionicons name="search" size={15} color="#FFFFFF" />
+            </LinearGradient>
+          ) : (
+            <View
+              style={[
+                styles.searchPillInactive,
+                { backgroundColor: theme.card, borderColor: theme.cardBorder },
+              ]}
+            >
+              <Ionicons
+                name="search-outline"
+                size={15}
+                color={theme.textSecondary}
+              />
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -216,12 +267,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    height: 44,
+    height: 42,
     borderRadius: 9999,
     borderWidth: 1,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
+    shadowOpacity: 0.04,
     shadowRadius: 6,
     elevation: 2,
   },
@@ -230,22 +281,24 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 13,
+    paddingVertical: 0,
     fontWeight: "500",
-    height: "100%",
   },
   clearBtn: {
     padding: 4,
+    marginLeft: 4,
   },
   filterChipsRow: {
     flexDirection: "row",
-    gap: 8,
+    alignItems: "center",
+    gap: 6,
   },
   chipTouchable: {
     flex: 1,
   },
   chipActive: {
-    paddingVertical: 9,
+    height: 38,
     borderRadius: 9999,
     alignItems: "center",
     justifyContent: "center",
@@ -257,7 +310,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   chipInactive: {
-    paddingVertical: 9,
+    height: 38,
     borderRadius: 9999,
     borderWidth: 1,
     alignItems: "center",
@@ -273,6 +326,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     letterSpacing: -0.1,
+  },
+  searchPillTouchable: {
+    width: 38,
+  },
+  searchPillActive: {
+    height: 38,
+    width: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.2,
+    borderColor: "rgba(255, 255, 255, 0.45)",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  searchPillInactive: {
+    height: 38,
+    width: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 

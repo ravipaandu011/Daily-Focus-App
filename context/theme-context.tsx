@@ -8,6 +8,7 @@ interface ThemeContextType {
   themeMode: ThemeMode;
   colorScheme: 'light' | 'dark';
   setThemeMode: (mode: ThemeMode) => Promise<void>;
+  toggleTheme: () => Promise<void>;
 }
 
 const THEME_STORAGE_KEY = '@personal_todo_app_theme_v1';
@@ -47,13 +48,19 @@ export const CustomThemeProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return systemColorScheme === 'dark' ? 'dark' : 'light';
   }, [themeMode, systemColorScheme]);
 
+  const toggleTheme = useCallback(async () => {
+    const nextMode = colorScheme === 'dark' ? 'light' : 'dark';
+    await setThemeMode(nextMode);
+  }, [colorScheme, setThemeMode]);
+
   const value = useMemo(
     () => ({
       themeMode,
       colorScheme,
       setThemeMode,
+      toggleTheme,
     }),
-    [themeMode, colorScheme, setThemeMode]
+    [themeMode, colorScheme, setThemeMode, toggleTheme]
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

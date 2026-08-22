@@ -15,6 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { SectionKey, TodoItem, RecurrenceType, SubtaskItem } from '@/types/todo';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAppTheme } from '@/context/theme-context';
 import { useTodos } from '@/hooks/use-todos';
 import { TaskList } from '@/components/task-list';
 import { DateNavigator } from '@/components/date-navigator';
@@ -54,6 +55,7 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
   const sectionConfig = getCategoryConfig(activeSection);
   const colorScheme = useColorScheme() ?? 'light';
   const theme = Colors[colorScheme];
+  const { toggleTheme } = useAppTheme();
   const insets = useSafeAreaInsets();
 
   const topInset = Math.max(
@@ -270,7 +272,32 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
             <Text style={styles.streakText}>{streak}d</Text>
           </TouchableOpacity>
 
-          {/* Analytics & Gamification Button */}
+          {/* Quick 1-Click Dark/Light Theme Toggle (Small circle before Productivity/Trophy) */}
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={`Switch to ${colorScheme === 'dark' ? 'Light' : 'Dark'} mode`}
+            activeOpacity={0.75}
+            onPress={async () => {
+              if (Platform.OS !== 'web') {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }
+              await toggleTheme();
+            }}
+            style={[
+              styles.headerIconBtn,
+              {
+                backgroundColor: theme.card,
+                borderColor: theme.cardBorder,
+              },
+            ]}>
+            <Ionicons
+              name={colorScheme === 'dark' ? 'sunny' : 'moon'}
+              size={15}
+              color={colorScheme === 'dark' ? '#F59E0B' : '#8B5CF6'}
+            />
+          </TouchableOpacity>
+
+          {/* Productivity & Gamification Trophy Button */}
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Open Productivity Analytics & Badges"
@@ -278,39 +305,6 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
             onPress={handleOpenAnalytics}
             style={[styles.headerIconBtn, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
             <Ionicons name="trophy-outline" size={15} color="#3B82F6" />
-          </TouchableOpacity>
-
-          {/* Collapsible Search Toggle Button */}
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="Toggle Search"
-            activeOpacity={0.75}
-            onPress={() => {
-              if (Platform.OS !== 'web') {
-                Haptics.selectionAsync();
-              }
-              setIsSearchOpen((prev) => !prev);
-            }}
-            style={[
-              styles.headerIconBtn,
-              {
-                backgroundColor:
-                  isSearchOpen || searchQuery
-                    ? colorScheme === 'dark'
-                      ? '#1E293B'
-                      : '#F1F5F9'
-                    : theme.card,
-                borderColor:
-                  isSearchOpen || searchQuery ? sectionConfig.color : theme.cardBorder,
-              },
-            ]}>
-            <Ionicons
-              name="search-outline"
-              size={15}
-              color={
-                isSearchOpen || searchQuery ? sectionConfig.color : theme.textSecondary
-              }
-            />
           </TouchableOpacity>
 
           {/* Settings & Hub Button (LAST) */}
