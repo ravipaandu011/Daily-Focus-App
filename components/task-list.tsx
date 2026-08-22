@@ -307,33 +307,29 @@ export const TaskList: React.FC<TaskListProps> = ({
                 </Text>
               </TouchableOpacity>
 
-              {/* 2. Focus Timer (Single Task) */}
-              {!isMultiSelect && activeItem && (
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={handleToolbarFocus}
-                  style={styles.actionBtnWrapper}>
-                  <Ionicons name="timer-outline" size={19} color="#3B82F6" />
-                  <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Timer</Text>
-                </TouchableOpacity>
-              )}
+              {/* 2. Focus Timer */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleToolbarFocus}
+                style={styles.actionBtnWrapper}>
+                <Ionicons name="timer-outline" size={19} color="#3B82F6" />
+                <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Timer</Text>
+              </TouchableOpacity>
 
-              {/* 3. Star / Pin (Single Task) */}
-              {!isMultiSelect && activeItem && (
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={handleToolbarPin}
-                  style={styles.actionBtnWrapper}>
-                  <Ionicons
-                    name={activeItem?.pinned ? 'star' : 'star-outline'}
-                    size={19}
-                    color="#F59E0B"
-                  />
-                  <Text style={[styles.actionBtnLabel, { color: theme.text }]}>
-                    {activeItem?.pinned ? 'Unpin' : 'Star'}
-                  </Text>
-                </TouchableOpacity>
-              )}
+              {/* 3. Star / Pin */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleToolbarPin}
+                style={styles.actionBtnWrapper}>
+                <Ionicons
+                  name={activeItem?.pinned ? 'star' : 'star-outline'}
+                  size={19}
+                  color="#F59E0B"
+                />
+                <Text style={[styles.actionBtnLabel, { color: theme.text }]}>
+                  {activeItem?.pinned ? 'Unpin' : 'Star'}
+                </Text>
+              </TouchableOpacity>
 
               {/* 4. Move to Tomorrow */}
               <TouchableOpacity
@@ -348,27 +344,23 @@ export const TaskList: React.FC<TaskListProps> = ({
                 <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Tomorrow</Text>
               </TouchableOpacity>
 
-              {/* 5. Transfer Category (Single Task) */}
-              {!isMultiSelect && activeItem && (
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={handleToolbarTransfer}
-                  style={styles.actionBtnWrapper}>
-                  <Ionicons name="swap-horizontal" size={19} color="#8B5CF6" />
-                  <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Transfer</Text>
-                </TouchableOpacity>
-              )}
+              {/* 5. Transfer Category */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleToolbarTransfer}
+                style={styles.actionBtnWrapper}>
+                <Ionicons name="swap-horizontal" size={19} color="#8B5CF6" />
+                <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Transfer</Text>
+              </TouchableOpacity>
 
-              {/* 6. Edit Details (Single Task) */}
-              {!isMultiSelect && activeItem && (
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={handleToolbarEdit}
-                  style={styles.actionBtnWrapper}>
-                  <Ionicons name="pencil-outline" size={19} color="#64748B" />
-                  <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Edit</Text>
-                </TouchableOpacity>
-              )}
+              {/* 6. Edit Details */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleToolbarEdit}
+                style={styles.actionBtnWrapper}>
+                <Ionicons name="pencil-outline" size={19} color="#64748B" />
+                <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Edit</Text>
+              </TouchableOpacity>
 
               {/* 7. Delete */}
               <TouchableOpacity
