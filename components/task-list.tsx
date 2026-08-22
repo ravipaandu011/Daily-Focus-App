@@ -314,7 +314,7 @@ export const TaskList: React.FC<TaskListProps> = ({
             )}
           </View>
 
-          {/* Glassmorphic Acrylic Action Bar: shown by default when tasks exist */}
+          {/* Contextual Action Bar: Crystal Clear Glassmorphic Pill */}
           {todos.length > 0 && (
             <View
               style={[
@@ -322,8 +322,8 @@ export const TaskList: React.FC<TaskListProps> = ({
                 {
                   borderColor:
                     colorScheme === 'dark'
-                      ? 'rgba(255, 255, 255, 0.28)'
-                      : 'rgba(255, 255, 255, 0.90)',
+                      ? 'rgba(255, 255, 255, 0.22)'
+                      : 'rgba(255, 255, 255, 0.65)',
                   shadowColor: colorScheme === 'dark' ? '#000000' : '#64748B',
                 },
               ]}>
@@ -331,16 +331,16 @@ export const TaskList: React.FC<TaskListProps> = ({
                 colors={
                   colorScheme === 'dark'
                     ? [
-                        'rgba(255, 255, 255, 0.20)',
-                        'rgba(255, 255, 255, 0.05)',
-                        'rgba(255, 255, 255, 0.16)',
-                        'rgba(255, 255, 255, 0.04)',
+                        'rgba(255, 255, 255, 0.12)',
+                        'rgba(255, 255, 255, 0.02)',
+                        'rgba(255, 255, 255, 0.09)',
+                        'rgba(255, 255, 255, 0.02)',
                       ]
                     : [
-                        'rgba(255, 255, 255, 0.80)',
+                        'rgba(255, 255, 255, 0.38)',
+                        'rgba(255, 255, 255, 0.08)',
                         'rgba(255, 255, 255, 0.25)',
-                        'rgba(255, 255, 255, 0.65)',
-                        'rgba(255, 255, 255, 0.30)',
+                        'rgba(255, 255, 255, 0.08)',
                       ]
                 }
                 locations={[0, 0.38, 0.68, 1]}
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-around',
     paddingHorizontal: 8,
-    paddingVertical: 7,
+    paddingVertical: 4,
     borderRadius: 9999,
   },
   actionBtnWrapper: {
@@ -507,11 +507,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 1,
     minWidth: 34,
-    gap: 2,
+    gap: 1.5,
   },
   actionBtnLabel: {
     fontSize: 8.5,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: -0.1,
     lineHeight: 11,
   },
