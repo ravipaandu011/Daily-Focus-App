@@ -8,6 +8,7 @@ import {
   Platform,
   Modal,
   TouchableWithoutFeedback,
+  BackHandler,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -82,6 +83,15 @@ const DynamicBottomTabBarComponent: React.FC = () => {
     },
     [isCustomCategory, getCategoryConfig]
   );
+
+  React.useEffect(() => {
+    if (!actionMenuCategory) return;
+    const backSub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setActionMenuCategory(null);
+      return true;
+    });
+    return () => backSub.remove();
+  }, [actionMenuCategory]);
 
   const handleOpenAddModal = React.useCallback(() => {
     if (Platform.OS !== 'web') {

@@ -9,6 +9,7 @@ import {
   TextInput,
   Platform,
   StatusBar,
+  BackHandler,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -112,12 +113,26 @@ export const RoutinesModal: React.FC<RoutinesModalProps> = ({
   const allRoutines = [...customRoutines, ...DEFAULT_ROUTINES];
   const sectionKeys: SectionKey[] = ['work', 'education', 'gym', 'home', 'personal'];
 
+  const handleClose = React.useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!visible) return;
+    const backSub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleClose();
+      return true;
+    });
+    return () => backSub.remove();
+  }, [visible, handleClose]);
+
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType={Platform.OS === 'ios' ? 'slide' : 'fade'}
       presentationStyle="pageSheet"
-      onRequestClose={onClose}>
+      statusBarTranslucent={true}
+      onRequestClose={handleClose}>
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         {/* Modal Header */}
         <View

@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Platform,
   TouchableWithoutFeedback,
+  BackHandler,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -42,8 +43,6 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   const colorScheme = useColorScheme() ?? 'light';
   const theme = Colors[colorScheme];
 
-  if (!visible) return null;
-
   const handleConfirm = () => {
     if (Platform.OS !== 'web') {
       if (variant === 'danger') {
@@ -55,12 +54,21 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     onConfirm();
   };
 
-  const handleCancel = () => {
+  const handleCancel = React.useCallback(() => {
     if (Platform.OS !== 'web') {
       Haptics.selectionAsync();
     }
     onCancel?.();
-  };
+  }, [onCancel]);
+
+  React.useEffect(() => {
+    if (!visible) return;
+    const backSub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleCancel();
+      return true;
+    });
+    return () => backSub.remove();
+  }, [visible, handleCancel]);
 
   const isDanger = variant === 'danger';
   const isWarning = variant === 'warning';

@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Platform,
   StatusBar,
+  BackHandler,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -46,11 +47,10 @@ export const TaskTransferModal: React.FC<TaskTransferModalProps> = ({
   );
   const { allCategoryKeys, getCategoryConfig } = useCategories();
 
-  if (!item) return null;
-
   const sectionKeys = allCategoryKeys;
 
   const handleMove = async (targetSection: SectionKey) => {
+    if (!item) return;
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
@@ -59,6 +59,7 @@ export const TaskTransferModal: React.FC<TaskTransferModalProps> = ({
   };
 
   const handleDuplicate = async (targetDate: string) => {
+    if (!item) return;
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
@@ -70,12 +71,28 @@ export const TaskTransferModal: React.FC<TaskTransferModalProps> = ({
   const tomorrow = getTomorrowKey();
   const nextWeek = addDaysToDateKey(today, 7);
 
+  const handleClose = React.useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  React.useEffect(() => {
+    if (!visible) return;
+    const backSub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleClose();
+      return true;
+    });
+    return () => backSub.remove();
+  }, [visible, handleClose]);
+
+  if (!item) return null;
+
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType={Platform.OS === 'ios' ? 'slide' : 'fade'}
       presentationStyle="pageSheet"
-      onRequestClose={onClose}
+      statusBarTranslucent={true}
+      onRequestClose={handleClose}
     >
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         {/* Header */}

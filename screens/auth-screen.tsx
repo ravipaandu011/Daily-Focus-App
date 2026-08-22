@@ -16,6 +16,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  BackHandler,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -57,6 +58,15 @@ export const AuthScreen: React.FC = () => {
     message: '',
     variant: 'info',
   });
+
+  React.useEffect(() => {
+    if (!resetModalVisible) return;
+    const backSub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setResetModalVisible(false);
+      return true;
+    });
+    return () => backSub.remove();
+  }, [resetModalVisible]);
 
   const handleSocialSignIn = async (provider: SocialProvider) => {
     if (Platform.OS !== 'web') {
@@ -496,6 +506,7 @@ export const AuthScreen: React.FC = () => {
         visible={resetModalVisible}
         animationType="fade"
         transparent={true}
+        statusBarTranslucent={true}
         onRequestClose={() => setResetModalVisible(false)}>
         <View style={styles.modalBackdrop}>
           <View

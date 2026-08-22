@@ -9,6 +9,7 @@ import {
   ScrollView,
   Platform,
   StatusBar,
+  BackHandler,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -155,13 +156,26 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
     setDeleteTarget(null);
   };
 
+  const handleClose = React.useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!visible) return;
+    const backSub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleClose();
+      return true;
+    });
+    return () => backSub.remove();
+  }, [visible, handleClose]);
+
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType={Platform.OS === 'ios' ? 'slide' : 'fade'}
       presentationStyle="pageSheet"
       statusBarTranslucent={true}
-      onRequestClose={onClose}>
+      onRequestClose={handleClose}>
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         {/* Header */}
         <View

@@ -11,6 +11,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ScrollView,
+  BackHandler,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -128,17 +129,26 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
     onClose();
   };
 
-  const handleClose = () => {
+  const handleClose = React.useCallback(() => {
     Keyboard.dismiss();
     onClose();
-  };
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!visible) return;
+    const backSub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleClose();
+      return true;
+    });
+    return () => backSub.remove();
+  }, [visible, handleClose]);
 
   if (!item) return null;
 
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType={Platform.OS === 'ios' ? 'slide' : 'fade'}
       transparent={true}
       statusBarTranslucent={true}
       onRequestClose={handleClose}>

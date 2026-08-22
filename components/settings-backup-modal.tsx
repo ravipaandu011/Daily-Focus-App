@@ -11,6 +11,7 @@ import {
   StatusBar,
   Share,
   Switch,
+  BackHandler,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -251,12 +252,30 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
     onClose();
   };
 
+  const handleClose = React.useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!visible) return;
+    const backSub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (importModalVisible) {
+        setImportModalVisible(false);
+        return true;
+      }
+      handleClose();
+      return true;
+    });
+    return () => backSub.remove();
+  }, [visible, importModalVisible, handleClose]);
+
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType={Platform.OS === 'ios' ? 'slide' : 'fade'}
       presentationStyle="pageSheet"
-      onRequestClose={onClose}
+      statusBarTranslucent={true}
+      onRequestClose={handleClose}
     >
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         {/* Modal Header */}
@@ -755,6 +774,7 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
           visible={importModalVisible}
           animationType="fade"
           transparent={true}
+          statusBarTranslucent={true}
           onRequestClose={() => setImportModalVisible(false)}
         >
           <View style={styles.importBackdrop}>

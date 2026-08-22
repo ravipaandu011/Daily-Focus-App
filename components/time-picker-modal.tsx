@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Platform,
   TouchableWithoutFeedback,
+  BackHandler,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -98,6 +99,10 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
     setIsPM(parsed.isPM);
   };
 
+  const handleClose = React.useCallback(() => {
+    onClose();
+  }, [onClose]);
+
   const handleSave = () => {
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -108,8 +113,17 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
     const mStr = minute < 10 ? `0${minute}` : `${minute}`;
     const formatted = `${hStr}:${mStr}`;
     onSave(formatted);
-    onClose();
+    handleClose();
   };
+
+  useEffect(() => {
+    if (!visible) return;
+    const backSub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleClose();
+      return true;
+    });
+    return () => backSub.remove();
+  }, [visible, handleClose]);
 
   if (!visible) return null;
 
@@ -119,7 +133,7 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
       transparent={true}
       animationType="fade"
       statusBarTranslucent={true}
-      onRequestClose={onClose}>
+      onRequestClose={handleClose}>
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.backdrop}>
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation?.()}>

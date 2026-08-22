@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
+  BackHandler,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -92,12 +93,26 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
 
   const weekDayLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
+  const handleClose = React.useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  React.useEffect(() => {
+    if (!visible) return;
+    const backSub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleClose();
+      return true;
+    });
+    return () => backSub.remove();
+  }, [visible, handleClose]);
+
   return (
     <Modal
       visible={visible}
       animationType="fade"
       transparent={true}
-      onRequestClose={onClose}>
+      statusBarTranslucent={true}
+      onRequestClose={handleClose}>
       <View style={styles.backdrop}>
         <View
           style={[

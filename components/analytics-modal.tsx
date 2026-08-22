@@ -8,6 +8,7 @@ import {
   ScrollView,
   Platform,
   StatusBar,
+  BackHandler,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -49,12 +50,26 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
 
   const unlockedCount = achievements.filter((b) => b.unlocked).length;
 
+  const handleClose = React.useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  React.useEffect(() => {
+    if (!visible) return;
+    const backSub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleClose();
+      return true;
+    });
+    return () => backSub.remove();
+  }, [visible, handleClose]);
+
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType={Platform.OS === 'ios' ? 'slide' : 'fade'}
       presentationStyle="pageSheet"
-      onRequestClose={onClose}>
+      statusBarTranslucent={true}
+      onRequestClose={handleClose}>
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         {/* Modal Header */}
         <View

@@ -9,6 +9,7 @@ import {
   StatusBar,
   ScrollView,
   TextInput,
+  BackHandler,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -78,6 +79,15 @@ export const FocusTimerModal: React.FC<FocusTimerModalProps> = ({
     stopTimerAlarmLoop();
     onClose();
   }, [onClose]);
+
+  useEffect(() => {
+    if (!visible) return;
+    const backSub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleCloseModal();
+      return true;
+    });
+    return () => backSub.remove();
+  }, [visible, handleCloseModal]);
 
   useEffect(() => {
     if (visible) {
@@ -193,8 +203,9 @@ export const FocusTimerModal: React.FC<FocusTimerModalProps> = ({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType={Platform.OS === 'ios' ? 'slide' : 'fade'}
       presentationStyle="pageSheet"
+      statusBarTranslucent={true}
       onRequestClose={handleCloseModal}>
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         {/* Header */}
