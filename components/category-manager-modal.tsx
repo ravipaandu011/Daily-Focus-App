@@ -160,6 +160,7 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
       visible={visible}
       animationType="slide"
       presentationStyle="pageSheet"
+      statusBarTranslucent={true}
       onRequestClose={onClose}>
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         {/* Header */}

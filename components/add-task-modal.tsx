@@ -179,12 +179,13 @@ export const AddTaskModal: React.FC<AddTaskModalProps> = ({
       visible={visible}
       animationType="slide"
       transparent={true}
+      statusBarTranslucent={true}
       onRequestClose={handleClose}>
-      <TouchableWithoutFeedback onPress={handleClose}>
-        <View style={styles.backdrop}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            style={styles.keyboardAvoid}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoid}>
+        <TouchableWithoutFeedback onPress={handleClose}>
+          <View style={styles.backdrop}>
             <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
               <View
                 style={[
@@ -194,314 +195,324 @@ export const AddTaskModal: React.FC<AddTaskModalProps> = ({
                     borderColor: theme.cardBorder,
                   },
                 ]}>
-                {/* Header */}
-                <View style={styles.headerRow}>
-                  <View style={styles.titleContainer}>
-                    <LinearGradient
-                      colors={sectionConfig.gradient}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.headerIconGradient}>
-                      <Ionicons
-                        name={sectionConfig.activeIconName}
-                        size={18}
-                        color="#FFFFFF"
-                      />
-                    </LinearGradient>
-                    <Text style={[styles.headerTitle, { color: theme.text }]}>
-                      {isBatchMode ? 'Batch Task Input' : 'New Task'}
-                    </Text>
-                  </View>
+                <ScrollView
+                  keyboardShouldPersistTaps="handled"
+                  showsVerticalScrollIndicator={false}
+                  bounces={false}
+                  contentContainerStyle={styles.scrollBody}>
+                  {/* Header */}
+                  <View style={styles.headerRow}>
+                    <View style={styles.titleContainer}>
+                      <LinearGradient
+                        colors={sectionConfig.gradient}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.headerIconGradient}>
+                        <Ionicons
+                          name={sectionConfig.activeIconName}
+                          size={18}
+                          color="#FFFFFF"
+                        />
+                      </LinearGradient>
+                      <Text style={[styles.headerTitle, { color: theme.text }]}>
+                        {isBatchMode ? 'Batch Task Input' : 'New Task'}
+                      </Text>
+                    </View>
 
-                  <View style={styles.headerActions}>
-                    <TouchableOpacity
-                      activeOpacity={0.7}
-                      onPress={() => setIsBatchMode((prev) => !prev)}
-                      style={[
-                        styles.modeToggleBtn,
-                        {
-                          backgroundColor: isBatchMode
-                            ? colorScheme === 'dark'
-                              ? '#1E3A8A'
-                              : '#EFF6FF'
-                            : theme.inputBg,
-                        },
-                      ]}>
-                      <Ionicons
-                        name={isBatchMode ? 'list' : 'list-outline'}
-                        size={14}
-                        color={isBatchMode ? '#3B82F6' : theme.textSecondary}
-                      />
-                      <Text
+                    <View style={styles.headerActions}>
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => setIsBatchMode((prev) => !prev)}
                         style={[
-                          styles.modeToggleText,
+                          styles.modeToggleBtn,
                           {
-                            color: isBatchMode ? '#3B82F6' : theme.textSecondary,
+                            backgroundColor: isBatchMode
+                              ? colorScheme === 'dark'
+                                ? '#1E3A8A'
+                                : '#EFF6FF'
+                              : theme.inputBg,
                           },
                         ]}>
-                        {isBatchMode ? 'Multi-line' : 'Single'}
-                      </Text>
-                    </TouchableOpacity>
+                        <Ionicons
+                          name={isBatchMode ? 'list' : 'list-outline'}
+                          size={14}
+                          color={isBatchMode ? '#3B82F6' : theme.textSecondary}
+                        />
+                        <Text
+                          style={[
+                            styles.modeToggleText,
+                            {
+                              color: isBatchMode ? '#3B82F6' : theme.textSecondary,
+                            },
+                          ]}>
+                          {isBatchMode ? 'Multi-line' : 'Single'}
+                        </Text>
+                      </TouchableOpacity>
 
-                    <TouchableOpacity
-                      onPress={handleClose}
-                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                      style={[styles.closeBtn, { backgroundColor: theme.inputBg }]}>
-                      <Ionicons name="close" size={18} color={theme.textSecondary} />
-                    </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={handleClose}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        style={[styles.closeBtn, { backgroundColor: theme.inputBg }]}>
+                        <Ionicons name="close" size={18} color={theme.textSecondary} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
 
-                {/* Day Selection Chips */}
-                <View style={styles.dateSelectorContainer}>
-                  <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>
-                    Schedule for:
-                  </Text>
-                  <View style={styles.dateChipsRow}>
-                    {[
-                      { key: yesterday, label: 'Yesterday' },
-                      { key: today, label: 'Today' },
-                      { key: tomorrow, label: 'Tomorrow' },
-                    ].map((item) => {
-                      const isActive = targetDate === item.key;
-                      return (
-                        <TouchableOpacity
-                          key={item.key}
-                          activeOpacity={0.75}
-                          onPress={() => setTargetDate(item.key)}
-                          style={styles.dateChipTouchable}>
-                          {isActive ? (
-                            <LinearGradient
-                              colors={sectionConfig.gradient}
-                              start={{ x: 0, y: 0 }}
-                              end={{ x: 1, y: 1 }}
-                              style={styles.dateChipActive}>
-                              <Text style={styles.dateChipTextActive}>{item.label}</Text>
-                            </LinearGradient>
-                          ) : (
-                            <View
-                              style={[
-                                styles.dateChipInactive,
-                                {
-                                  backgroundColor: theme.inputBg,
-                                  borderColor: theme.cardBorder,
-                                },
-                              ]}>
-                              <Text
-                                style={[
-                                  styles.dateChipTextInactive,
-                                  { color: theme.textSecondary },
-                                ]}>
-                                {item.label}
-                              </Text>
-                            </View>
-                          )}
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                </View>
-
-                {/* Input (Single or Multi-line) */}
-                <View style={styles.inputWrapper}>
-                  <TextInput
-                    ref={inputRef}
-                    value={text}
-                    onChangeText={setText}
-                    placeholder={
-                      isBatchMode
-                        ? 'Paste multiple tasks (one per line)...'
-                        : 'What do you need to do?'
-                    }
-                    placeholderTextColor={theme.textMuted}
-                    style={[
-                      styles.input,
-                      isBatchMode && styles.inputBatch,
-                      {
-                        backgroundColor: theme.inputBg,
-                        borderColor: theme.inputBorder,
-                        color: theme.text,
-                      },
-                    ]}
-                    multiline={isBatchMode}
-                    numberOfLines={isBatchMode ? 4 : 1}
-                    returnKeyType={isBatchMode ? 'default' : 'done'}
-                    onSubmitEditing={!isBatchMode ? handleSubmit : undefined}
-                    blurOnSubmit={!isBatchMode}
-                  />
-                </View>
-
-                {/* Advanced Options Toggle */}
-                {!isBatchMode && (
-                  <TouchableOpacity
-                    onPress={() => setShowAdvanced((p) => !p)}
-                    style={styles.advancedToggle}>
-                    <Ionicons
-                      name={showAdvanced ? 'chevron-up' : 'options-outline'}
-                      size={14}
-                      color="#3B82F6"
-                    />
-                    <Text style={styles.advancedToggleText}>
-                      {showAdvanced ? 'Hide Advanced Options' : '+ Subtasks, Recurrence & Notes'}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-
-                {showAdvanced && !isBatchMode && (
-                  <View style={styles.advancedSection}>
-                    {/* Recurrence Selector */}
+                  {/* Day Selection Chips */}
+                  <View style={styles.dateSelectorContainer}>
                     <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>
-                      Auto-Repeat Recurrence:
+                      Schedule for:
                     </Text>
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={styles.tagsScroll}>
-                      {RECURRENCE_OPTIONS.map((rec) => {
-                        const isSel = selectedRecurrence === rec.key;
+                    <View style={styles.dateChipsRow}>
+                      {[
+                        { key: yesterday, label: 'Yesterday' },
+                        { key: today, label: 'Today' },
+                        { key: tomorrow, label: 'Tomorrow' },
+                      ].map((item) => {
+                        const isActive = targetDate === item.key;
                         return (
                           <TouchableOpacity
-                            key={rec.key}
-                            onPress={() => setSelectedRecurrence(rec.key)}
-                            style={[
-                              styles.tagChip,
-                              {
-                                backgroundColor: isSel ? sectionConfig.color : theme.inputBg,
-                                borderColor: isSel ? sectionConfig.color : theme.cardBorder,
-                              },
-                            ]}>
-                            <Text
-                              style={[
-                                styles.tagText,
-                                {
-                                  color: isSel ? '#FFFFFF' : theme.textSecondary,
-                                  fontWeight: isSel ? '700' : '500',
-                                },
-                              ]}>
-                              {rec.label}
-                            </Text>
+                            key={item.key}
+                            activeOpacity={0.75}
+                            onPress={() => setTargetDate(item.key)}
+                            style={styles.dateChipTouchable}>
+                            {isActive ? (
+                              <LinearGradient
+                                colors={sectionConfig.gradient}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={styles.dateChipActive}>
+                                <Text style={styles.dateChipTextActive}>{item.label}</Text>
+                              </LinearGradient>
+                            ) : (
+                              <View
+                                style={[
+                                  styles.dateChipInactive,
+                                  {
+                                    backgroundColor: theme.inputBg,
+                                    borderColor: theme.cardBorder,
+                                  },
+                                ]}>
+                                <Text
+                                  style={[
+                                    styles.dateChipTextInactive,
+                                    { color: theme.textSecondary },
+                                  ]}>
+                                  {item.label}
+                                </Text>
+                              </View>
+                            )}
                           </TouchableOpacity>
                         );
                       })}
-                    </ScrollView>
-
-                    {/* Subtasks Builder */}
-                    <Text style={[styles.sectionLabel, { color: theme.textSecondary, marginTop: 10 }]}>
-                      Subtasks & Checklist:
-                    </Text>
-                    <View style={styles.subtaskInputRow}>
-                      <TextInput
-                        value={subtaskInput}
-                        onChangeText={setSubtaskInput}
-                        placeholder="Add a subtask..."
-                        placeholderTextColor={theme.textMuted}
-                        style={[
-                          styles.subtaskInput,
-                          {
-                            backgroundColor: theme.inputBg,
-                            borderColor: theme.inputBorder,
-                            color: theme.text,
-                          },
-                        ]}
-                        onSubmitEditing={handleAddSubtask}
-                      />
-                      <TouchableOpacity
-                        onPress={handleAddSubtask}
-                        disabled={!subtaskInput.trim()}
-                        style={[styles.addSubtaskBtn, { backgroundColor: theme.inputBg }]}>
-                        <Ionicons name="add" size={18} color={theme.text} />
-                      </TouchableOpacity>
                     </View>
+                  </View>
 
-                    {subtasks.length > 0 && (
-                      <View style={styles.subtasksList}>
-                        {subtasks.map((st) => (
-                          <View key={st.id} style={[styles.subtaskPill, { backgroundColor: theme.inputBg }]}>
-                            <Ionicons name="checkbox-outline" size={13} color={theme.textSecondary} />
-                            <Text style={[styles.subtaskPillText, { color: theme.text }]}>
-                              {st.title}
-                            </Text>
-                            <TouchableOpacity onPress={() => handleRemoveSubtask(st.id)}>
-                              <Ionicons name="close" size={14} color={theme.textMuted} />
-                            </TouchableOpacity>
-                          </View>
-                        ))}
-                      </View>
-                    )}
-
-                    {/* Notes Input */}
-                    <Text style={[styles.sectionLabel, { color: theme.textSecondary, marginTop: 10 }]}>
-                      Notes & Links (Optional):
-                    </Text>
+                  {/* Input (Single or Multi-line) */}
+                  <View style={styles.inputWrapper}>
                     <TextInput
-                      value={notes}
-                      onChangeText={setNotes}
-                      placeholder="Add reference links, notes..."
+                      ref={inputRef}
+                      value={text}
+                      onChangeText={setText}
+                      placeholder={
+                        isBatchMode
+                          ? 'Paste multiple tasks (one per line)...'
+                          : 'What do you need to do?'
+                      }
                       placeholderTextColor={theme.textMuted}
-                      multiline
-                      numberOfLines={2}
                       style={[
-                        styles.notesInput,
+                        styles.input,
+                        isBatchMode && styles.inputBatch,
                         {
                           backgroundColor: theme.inputBg,
                           borderColor: theme.inputBorder,
                           color: theme.text,
                         },
                       ]}
+                      multiline={isBatchMode}
+                      numberOfLines={isBatchMode ? 4 : 1}
+                      returnKeyType={isBatchMode ? 'default' : 'done'}
+                      onSubmitEditing={!isBatchMode ? handleSubmit : undefined}
+                      blurOnSubmit={!isBatchMode}
                     />
                   </View>
-                )}
 
-                {/* Add Task Button with Material Rounded Radius */}
-                <TouchableOpacity
-                  onPress={handleSubmit}
-                  disabled={!text.trim()}
-                  activeOpacity={0.85}
-                  style={styles.submitTouchable}>
-                  <LinearGradient
-                    colors={sectionConfig.gradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[
-                      styles.submitBtnGradient,
-                      { opacity: text.trim() ? 1 : 0.45 },
-                    ]}>
-                    <Text style={styles.submitBtnText}>
-                      {lineCount > 1 ? `Add ${lineCount} Tasks` : 'Add Task'}
-                    </Text>
-                  </LinearGradient>
-                </TouchableOpacity>
+                  {/* Advanced Options Toggle */}
+                  {!isBatchMode && (
+                    <TouchableOpacity
+                      onPress={() => setShowAdvanced((p) => !p)}
+                      style={styles.advancedToggle}>
+                      <Ionicons
+                        name={showAdvanced ? 'chevron-up' : 'options-outline'}
+                        size={14}
+                        color="#3B82F6"
+                      />
+                      <Text style={styles.advancedToggleText}>
+                        {showAdvanced ? 'Hide Advanced Options' : '+ Subtasks, Recurrence & Notes'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {showAdvanced && !isBatchMode && (
+                    <View style={styles.advancedSection}>
+                      {/* Recurrence Selector */}
+                      <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>
+                        Auto-Repeat Recurrence:
+                      </Text>
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.tagsScroll}>
+                        {RECURRENCE_OPTIONS.map((rec) => {
+                          const isSel = selectedRecurrence === rec.key;
+                          return (
+                            <TouchableOpacity
+                              key={rec.key}
+                              onPress={() => setSelectedRecurrence(rec.key)}
+                              style={[
+                                styles.tagChip,
+                                {
+                                  backgroundColor: isSel ? sectionConfig.color : theme.inputBg,
+                                  borderColor: isSel ? sectionConfig.color : theme.cardBorder,
+                                },
+                              ]}>
+                              <Text
+                                style={[
+                                  styles.tagText,
+                                  {
+                                    color: isSel ? '#FFFFFF' : theme.textSecondary,
+                                    fontWeight: isSel ? '700' : '500',
+                                  },
+                                ]}>
+                                {rec.label}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </ScrollView>
+
+                      {/* Subtasks Builder */}
+                      <Text style={[styles.sectionLabel, { color: theme.textSecondary, marginTop: 10 }]}>
+                        Subtasks & Checklist:
+                      </Text>
+                      <View style={styles.subtaskInputRow}>
+                        <TextInput
+                          value={subtaskInput}
+                          onChangeText={setSubtaskInput}
+                          placeholder="Add a subtask..."
+                          placeholderTextColor={theme.textMuted}
+                          style={[
+                            styles.subtaskInput,
+                            {
+                              backgroundColor: theme.inputBg,
+                              borderColor: theme.inputBorder,
+                              color: theme.text,
+                            },
+                          ]}
+                          onSubmitEditing={handleAddSubtask}
+                        />
+                        <TouchableOpacity
+                          onPress={handleAddSubtask}
+                          disabled={!subtaskInput.trim()}
+                          style={[styles.addSubtaskBtn, { backgroundColor: theme.inputBg }]}>
+                          <Ionicons name="add" size={18} color={theme.text} />
+                        </TouchableOpacity>
+                      </View>
+
+                      {subtasks.length > 0 && (
+                        <View style={styles.subtasksList}>
+                          {subtasks.map((st) => (
+                            <View key={st.id} style={[styles.subtaskPill, { backgroundColor: theme.inputBg }]}>
+                              <Ionicons name="checkbox-outline" size={13} color={theme.textSecondary} />
+                              <Text style={[styles.subtaskPillText, { color: theme.text }]}>
+                                {st.title}
+                              </Text>
+                              <TouchableOpacity onPress={() => handleRemoveSubtask(st.id)}>
+                                <Ionicons name="close" size={14} color={theme.textMuted} />
+                              </TouchableOpacity>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+
+                      {/* Notes Input */}
+                      <Text style={[styles.sectionLabel, { color: theme.textSecondary, marginTop: 10 }]}>
+                        Notes & Links (Optional):
+                      </Text>
+                      <TextInput
+                        value={notes}
+                        onChangeText={setNotes}
+                        placeholder="Add reference links, notes..."
+                        placeholderTextColor={theme.textMuted}
+                        multiline
+                        numberOfLines={2}
+                        style={[
+                          styles.notesInput,
+                          {
+                            backgroundColor: theme.inputBg,
+                            borderColor: theme.inputBorder,
+                            color: theme.text,
+                          },
+                        ]}
+                      />
+                    </View>
+                  )}
+
+                  {/* Add Task Button with Material Rounded Radius */}
+                  <TouchableOpacity
+                    onPress={handleSubmit}
+                    disabled={!text.trim()}
+                    activeOpacity={0.85}
+                    style={styles.submitTouchable}>
+                    <LinearGradient
+                      colors={sectionConfig.gradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[
+                        styles.submitBtnGradient,
+                        { opacity: text.trim() ? 1 : 0.45 },
+                      ]}>
+                      <Text style={styles.submitBtnText}>
+                        {lineCount > 1 ? `Add ${lineCount} Tasks` : 'Add Task'}
+                      </Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </ScrollView>
               </View>
             </TouchableWithoutFeedback>
-          </KeyboardAvoidingView>
-        </View>
-      </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
+  keyboardAvoid: {
+    flex: 1,
+  },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
     justifyContent: 'flex-end',
   },
-  keyboardAvoid: {
-    width: '100%',
-  },
   modalContent: {
-    borderTopLeftRadius: 36,
-    borderTopRightRadius: 36,
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 28,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: Platform.OS === 'ios' ? 36 : 20,
+    maxHeight: '90%',
     borderWidth: 1,
     borderBottomWidth: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.15,
     shadowRadius: 16,
-    elevation: 20,
+    elevation: 24,
+  },
+  scrollBody: {
+    paddingBottom: 8,
   },
   headerRow: {
     flexDirection: 'row',

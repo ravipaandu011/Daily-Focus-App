@@ -140,12 +140,13 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
       visible={visible}
       animationType="slide"
       transparent={true}
+      statusBarTranslucent={true}
       onRequestClose={handleClose}>
-      <TouchableWithoutFeedback onPress={handleClose}>
-        <View style={styles.backdrop}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            style={styles.keyboardAvoid}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoid}>
+        <TouchableWithoutFeedback onPress={handleClose}>
+          <View style={styles.backdrop}>
             <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
               <View
                 style={[
@@ -321,35 +322,36 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
-          </KeyboardAvoidingView>
-        </View>
-      </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
+  keyboardAvoid: {
+    flex: 1,
+  },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
     justifyContent: 'flex-end',
   },
-  keyboardAvoid: {
-    width: '100%',
-  },
   modalContent: {
-    borderTopLeftRadius: 32, // Material 3 Bottom Sheet Radius
+    borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 28,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: Platform.OS === 'ios' ? 36 : 20,
+    maxHeight: '90%',
     borderWidth: 1,
     borderBottomWidth: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.15,
     shadowRadius: 16,
-    elevation: 20,
+    elevation: 24,
   },
   headerRow: {
     flexDirection: 'row',
