@@ -282,100 +282,118 @@ export const TaskList: React.FC<TaskListProps> = ({
             )}
           </View>
 
-          {/* Contextual Action Bar: pure stadium rounded and ultra-transparent */}
+          {/* Contextual Action Bar: Glassmorphic Acrylic Pill (Matching Image Sheen) */}
           {hasSelection && (
             <View
               style={[
-                styles.contextualActionBar,
+                styles.glassActionContainer,
                 {
-                  backgroundColor:
-                    colorScheme === 'dark'
-                      ? 'rgba(30, 41, 59, 0.20)'
-                      : 'rgba(241, 245, 249, 0.25)',
                   borderColor:
                     colorScheme === 'dark'
-                      ? 'rgba(51, 65, 85, 0.30)'
-                      : 'rgba(226, 232, 240, 0.45)',
+                      ? 'rgba(255, 255, 255, 0.28)'
+                      : 'rgba(255, 255, 255, 0.90)',
+                  shadowColor: colorScheme === 'dark' ? '#000000' : '#64748B',
                 },
               ]}>
-              {/* 1. Mark Done / Pending */}
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={handleToolbarComplete}
-                style={styles.actionBtnWrapper}>
-                <Ionicons
-                  name={activeItem?.completed ? 'checkmark-circle' : 'checkmark-circle-outline'}
-                  size={16.5}
-                  color="#10B981"
-                />
-                <Text style={[styles.actionBtnLabel, { color: theme.text }]}>
-                  {activeItem?.completed ? 'Undo' : 'Done'}
-                </Text>
-              </TouchableOpacity>
+              <LinearGradient
+                colors={
+                  colorScheme === 'dark'
+                    ? [
+                        'rgba(255, 255, 255, 0.20)',
+                        'rgba(255, 255, 255, 0.05)',
+                        'rgba(255, 255, 255, 0.16)',
+                        'rgba(255, 255, 255, 0.04)',
+                      ]
+                    : [
+                        'rgba(255, 255, 255, 0.80)',
+                        'rgba(255, 255, 255, 0.25)',
+                        'rgba(255, 255, 255, 0.65)',
+                        'rgba(255, 255, 255, 0.30)',
+                      ]
+                }
+                locations={[0, 0.38, 0.68, 1]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.glassActionGradient}>
+                {/* 1. Mark Done / Pending */}
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={handleToolbarComplete}
+                  style={styles.actionBtnWrapper}>
+                  <Ionicons
+                    name={activeItem?.completed ? 'checkmark-circle' : 'checkmark-circle-outline'}
+                    size={16.5}
+                    color="#10B981"
+                  />
+                  <Text style={[styles.actionBtnLabel, { color: theme.text }]}>
+                    {activeItem?.completed ? 'Undo' : 'Done'}
+                  </Text>
+                </TouchableOpacity>
 
-              {/* 2. Focus Timer */}
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={handleToolbarFocus}
-                style={styles.actionBtnWrapper}>
-                <Ionicons name="timer-outline" size={16.5} color="#3B82F6" />
-                <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Timer</Text>
-              </TouchableOpacity>
+                {/* 2. Focus Timer */}
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={handleToolbarFocus}
+                  style={styles.actionBtnWrapper}>
+                  <Ionicons name="timer-outline" size={16.5} color="#3B82F6" />
+                  <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Timer</Text>
+                </TouchableOpacity>
 
-              {/* 3. Pin */}
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={handleToolbarPin}
-                style={styles.actionBtnWrapper}>
-                <Ionicons
-                  name={activeItem?.pinned ? 'pin' : 'pin-outline'}
-                  size={16}
-                  color="#F59E0B"
-                />
-                <Text style={[styles.actionBtnLabel, { color: theme.text }]}>
-                  {activeItem?.pinned ? 'Unpin' : 'Pin'}
-                </Text>
-              </TouchableOpacity>
+                {/* 3. Pin */}
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={handleToolbarPin}
+                  style={styles.actionBtnWrapper}>
+                  <Ionicons
+                    name={activeItem?.pinned ? 'pin' : 'pin-outline'}
+                    size={16}
+                    color="#F59E0B"
+                  />
+                  <Text style={[styles.actionBtnLabel, { color: theme.text }]}>
+                    {activeItem?.pinned ? 'Unpin' : 'Pin'}
+                  </Text>
+                </TouchableOpacity>
 
-              {/* 4. Move to Tomorrow */}
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={handleToolbarTomorrow}
-                style={styles.actionBtnWrapper}>
-                <Ionicons
-                  name="arrow-forward-circle-outline"
-                  size={16}
-                  color="#06B6D4"
-                />
-                <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Tomorrow</Text>
-              </TouchableOpacity>
+                {/* 4. Move to Tomorrow */}
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={handleToolbarTomorrow}
+                  style={styles.actionBtnWrapper}>
+                  <Ionicons
+                    name="arrow-forward-circle-outline"
+                    size={16}
+                    color="#06B6D4"
+                  />
+                  <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Tomorrow</Text>
+                </TouchableOpacity>
 
-              {/* 5. Transfer Category */}
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={handleToolbarTransfer}
-                style={styles.actionBtnWrapper}>
-                <Ionicons name="swap-horizontal" size={16} color="#8B5CF6" />
-                <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Transfer</Text>
-              </TouchableOpacity>
+                {/* 5. Transfer Category */}
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={handleToolbarTransfer}
+                  style={styles.actionBtnWrapper}>
+                  <Ionicons name="swap-horizontal" size={16} color="#8B5CF6" />
+                  <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Transfer</Text>
+                </TouchableOpacity>
 
-              {/* 6. Edit Details */}
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={handleToolbarEdit}
-                style={styles.actionBtnWrapper}>
-                <Ionicons name="pencil-outline" size={16} color="#64748B" />
-                <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Edit</Text>
-              </TouchableOpacity>
+                {/* 6. Edit Details */}
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={handleToolbarEdit}
+                  style={styles.actionBtnWrapper}>
+                  <Ionicons name="pencil-outline" size={16} color="#64748B" />
+                  <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Edit</Text>
+                </TouchableOpacity>
 
-              {/* 7. Delete */}
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={handleToolbarDelete}
-                style={styles.actionBtnWrapper}>
-                <Ionicons name="trash-outline" size={16} color="#EF4444" />
-                <Text style={[styles.actionBtnLabel, { color: '#EF4444' }]}>Delete</Text>
-              </TouchableOpacity>
+                {/* 7. Delete */}
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={handleToolbarDelete}
+                  style={styles.actionBtnWrapper}>
+                  <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                  <Text style={[styles.actionBtnLabel, { color: '#EF4444' }]}>Delete</Text>
+                </TouchableOpacity>
+              </LinearGradient>
             </View>
           )}
         </>
@@ -432,22 +450,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  contextualActionBar: {
+  glassActionContainer: {
+    marginHorizontal: 16,
+    borderRadius: 9999,
+    borderWidth: 1.4,
+    overflow: 'hidden',
+    marginBottom: 10,
+    marginTop: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  glassActionGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    marginHorizontal: 16,
-    paddingHorizontal: 6,
-    paddingVertical: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 7,
     borderRadius: 9999,
-    borderWidth: 1,
-    marginBottom: 10,
-    marginTop: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
   },
   actionBtnWrapper: {
     alignItems: 'center',
