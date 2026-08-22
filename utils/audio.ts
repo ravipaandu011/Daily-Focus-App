@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { Platform, Vibration } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { createAudioPlayer } from 'expo-audio';
 
@@ -74,19 +74,34 @@ export function startTimerAlarmLoop(): void {
   // Stop any existing loop
   stopTimerAlarmLoop();
 
+  // Start continuous rhythmic vibration pattern on physical device
+  if (Platform.OS !== 'web') {
+    Vibration.vibrate([0, 500, 400, 500, 400, 500], true);
+  }
+
   // Play immediately
   playTimerCompleteSound();
 
-  // Repeat every 1.5 seconds
+  // Repeat alarm tone every 1.6 seconds continuously
   alarmIntervalId = setInterval(() => {
     playTimerCompleteSound();
-  }, 1500);
+  }, 1600);
 }
 
 // Stop continuous alarm chime loop
 export function stopTimerAlarmLoop(): void {
+  if (Platform.OS !== 'web') {
+    try {
+      Vibration.cancel();
+    } catch (_) {}
+  }
   if (alarmIntervalId) {
     clearInterval(alarmIntervalId);
     alarmIntervalId = null;
+  }
+  if (cachedPlayer) {
+    try {
+      cachedPlayer.pause();
+    } catch (_) {}
   }
 }

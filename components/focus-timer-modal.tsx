@@ -119,7 +119,6 @@ export const FocusTimerModal: React.FC<FocusTimerModalProps> = ({
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
-      stopTimerAlarmLoop();
     };
   }, [isRunning, handleFinish]);
 
