@@ -1,0 +1,402 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  Linking,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
+import { TodoItem } from '@/types/todo';
+import { SectionConfig } from '@/constants/sections';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+
+interface TaskItemProps {
+  item: TodoItem;
+  sectionConfig: SectionConfig;
+  isSelected?: boolean;
+  onSelectTask?: (id: string) => void;
+  onToggle: (id: string) => void;
+  onToggleSubtask?: (todoId: string, subtaskId: string) => void;
+}
+
+const TaskItemComponent: React.FC<TaskItemProps> = ({
+  item,
+  sectionConfig,
+  isSelected,
+  onSelectTask,
+  onToggle,
+  onToggleSubtask,
+}) => {
+  const hasSubtasks = Boolean(item.subtasks && item.subtasks.length > 0);
+  const [expandedSubtasks, setExpandedSubtasks] = useState<boolean>(hasSubtasks);
+  const colorScheme = useColorScheme() ?? 'light';
+  const theme = Colors[colorScheme];
+
+  const handleToggleComplete = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    onToggle(item.id);
+  };
+
+  const handleCardPress = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
+    }
+    onSelectTask?.(item.id);
+  };
+
+  const handleSubtaskToggle = (subtaskId: string) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    onToggleSubtask?.(item.id, subtaskId);
+  };
+
+  const handleOpenUrl = (url: string) => {
+    Linking.openURL(url).catch((e) => console.error('Failed to open url', e));
+  };
+
+  const subtasksTotal = item.subtasks?.length || 0;
+  const subtasksDone = item.subtasks?.filter((s) => s.completed).length || 0;
+  const urlMatch = item.notes?.match(/https?:\/\/[^\s]+/);
+
+  const isChecked = Boolean(item.completed);
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.84}
+      onPress={handleCardPress}
+      style={[
+        styles.container,
+        {
+          backgroundColor: isSelected
+            ? colorScheme === 'dark'
+              ? '#1E293B'
+              : '#EFF6FF'
+            : theme.card,
+          borderColor: isSelected
+            ? sectionConfig.color
+            : item.pinned
+            ? '#F59E0B'
+            : item.completed
+            ? theme.cardBorder
+            : colorScheme === 'dark'
+            ? `${sectionConfig.color}35`
+            : theme.cardBorder,
+          borderWidth: isSelected ? 2 : 1,
+        },
+        item.completed && styles.completedContainer,
+      ]}>
+      {/* Main Row: Rounded Checkbox, Text, Badges */}
+      <View style={styles.mainRow}>
+        {/* Checkbox: Rounded Squircle */}
+        <TouchableOpacity
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: isChecked }}
+          accessibilityLabel={`Mark "${item.text}" as ${item.completed ? 'pending' : 'completed'}`}
+          activeOpacity={0.7}
+          onPress={handleToggleComplete}
+          style={styles.checkboxTouch}>
+          {isChecked ? (
+            <LinearGradient
+              colors={sectionConfig.gradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.checkboxGradient}>
+              <Ionicons name="checkmark" size={15} color="#FFFFFF" />
+            </LinearGradient>
+          ) : (
+            <View
+              style={[
+                styles.checkboxEmpty,
+                {
+                  borderColor: isSelected
+                    ? sectionConfig.color
+                    : colorScheme === 'dark'
+                    ? '#475569'
+                    : '#CBD5E1',
+                },
+              ]}
+            />
+          )}
+        </TouchableOpacity>
+
+        {/* Task Text & Badges */}
+        <View style={styles.textContainer}>
+          {(item.pinned || (item.recurrence && item.recurrence !== 'none') || subtasksTotal > 0) && (
+            <View style={styles.badgeRow}>
+              {item.pinned && (
+                <View style={styles.pinnedBadge}>
+                  <Ionicons name="star" size={10} color="#F59E0B" />
+                  <Text style={styles.pinnedBadgeText}>PINNED</Text>
+                </View>
+              )}
+
+              {item.recurrence && item.recurrence !== 'none' && (
+                <View
+                  style={[
+                    styles.tagBadge,
+                    {
+                      backgroundColor: colorScheme === 'dark' ? '#3B200A' : '#FFF7ED',
+                      borderColor: '#F97316',
+                    },
+                  ]}>
+                  <Text style={[styles.tagBadgeText, { color: '#F97316' }]}>
+                    🔁 {item.recurrence.toUpperCase()}
+                  </Text>
+                </View>
+              )}
+
+              {subtasksTotal > 0 && (
+                <TouchableOpacity
+                  onPress={() => setExpandedSubtasks((p) => !p)}
+                  style={[
+                    styles.subtaskProgressBadge,
+                    {
+                      backgroundColor:
+                        subtasksDone === subtasksTotal
+                          ? colorScheme === 'dark'
+                            ? '#064E3B'
+                            : '#ECFDF5'
+                          : theme.inputBg,
+                      borderColor: subtasksDone === subtasksTotal ? '#10B981' : theme.cardBorder,
+                    },
+                  ]}>
+                  <Ionicons
+                    name={subtasksDone === subtasksTotal ? 'checkmark-circle' : 'list'}
+                    size={10}
+                    color={subtasksDone === subtasksTotal ? '#10B981' : theme.textSecondary}
+                  />
+                  <Text
+                    style={[
+                      styles.subtaskProgressText,
+                      {
+                        color:
+                          subtasksDone === subtasksTotal ? '#10B981' : theme.textSecondary,
+                      },
+                    ]}>
+                    {subtasksDone}/{subtasksTotal}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
+          <Text
+            numberOfLines={4}
+            style={[
+              styles.text,
+              { color: theme.text },
+              item.completed && [styles.completedText, { color: theme.textMuted }],
+            ]}>
+            {item.text}
+          </Text>
+        </View>
+      </View>
+
+      {/* Expandable Subtasks Checklist */}
+      {expandedSubtasks && item.subtasks && item.subtasks.length > 0 && (
+        <View style={[styles.subtasksContainer, { backgroundColor: theme.inputBg }]}>
+          {item.subtasks.map((st) => (
+            <TouchableOpacity
+              key={st.id}
+              activeOpacity={0.7}
+              onPress={() => handleSubtaskToggle(st.id)}
+              style={styles.subtaskRow}>
+              <Ionicons
+                name={st.completed ? 'checkmark-circle' : 'ellipse-outline'}
+                size={16}
+                color={st.completed ? '#10B981' : theme.textSecondary}
+              />
+              <Text
+                style={[
+                  styles.subtaskTitle,
+                  { color: theme.text },
+                  st.completed && styles.completedText,
+                ]}>
+                {st.title}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {/* Task Notes Snippet & Clickable Links */}
+      {item.notes && (
+        <View style={[styles.notesContainer, { backgroundColor: theme.inputBg }]}>
+          <Ionicons name="document-text-outline" size={13} color={theme.textSecondary} />
+          <Text style={[styles.notesText, { color: theme.textSecondary }]} numberOfLines={2}>
+            {item.notes}
+          </Text>
+          {urlMatch && (
+            <TouchableOpacity
+              onPress={() => handleOpenUrl(urlMatch[0])}
+              style={styles.openUrlBtn}>
+              <Ionicons name="open-outline" size={12} color="#3B82F6" />
+              <Text style={styles.openUrlText}>Open Link</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    marginBottom: 10,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+    gap: 8,
+  },
+  mainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  completedContainer: {
+    opacity: 0.65,
+  },
+  checkboxTouch: {
+    marginRight: 12,
+  },
+  checkboxGradient: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxEmpty: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 2,
+  },
+  textContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 5,
+    marginBottom: 4,
+  },
+  pinnedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 9999,
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+  },
+  pinnedBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#F59E0B',
+    letterSpacing: 0.5,
+  },
+  tagBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 9999,
+    borderWidth: 1,
+  },
+  tagBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#3B82F6',
+  },
+  subtaskProgressBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 9999,
+    borderWidth: 1,
+  },
+  subtaskProgressText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  text: {
+    fontSize: 15,
+    fontWeight: '500',
+    lineHeight: 22,
+  },
+  completedText: {
+    textDecorationLine: 'line-through',
+  },
+  subtasksContainer: {
+    padding: 12,
+    borderRadius: 18,
+    gap: 8,
+    marginTop: 2,
+  },
+  subtaskRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  subtaskTitle: {
+    fontSize: 13,
+    fontWeight: '500',
+    flex: 1,
+  },
+  notesContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    padding: 10,
+    borderRadius: 14,
+  },
+  notesText: {
+    fontSize: 12,
+    flex: 1,
+  },
+  openUrlBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  openUrlText: {
+    fontSize: 11,
+    color: '#3B82F6',
+    fontWeight: '700',
+  },
+});
+
+export const TaskItem = React.memo(TaskItemComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.sectionConfig.color === nextProps.sectionConfig.color &&
+    prevProps.item.id === nextProps.item.id &&
+    prevProps.item.text === nextProps.item.text &&
+    prevProps.item.completed === nextProps.item.completed &&
+    prevProps.item.pinned === nextProps.item.pinned &&
+    prevProps.item.tag === nextProps.item.tag &&
+    prevProps.item.recurrence === nextProps.item.recurrence &&
+    prevProps.item.notes === nextProps.item.notes &&
+    prevProps.item.date === nextProps.item.date &&
+    JSON.stringify(prevProps.item.subtasks) === JSON.stringify(nextProps.item.subtasks)
+  );
+});
+

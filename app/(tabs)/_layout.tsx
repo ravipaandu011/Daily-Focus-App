@@ -1,33 +1,43 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { DynamicBottomTabBar } from '@/components/dynamic-bottom-tab-bar';
+import { SECTIONS } from '@/constants/sections';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
+      tabBar={() => <DynamicBottomTabBar />}
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: SECTIONS.work.tabLabel,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="education"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: SECTIONS.education.tabLabel,
+        }}
+      />
+      <Tabs.Screen
+        name="gym"
+        options={{
+          title: SECTIONS.gym.tabLabel,
+        }}
+      />
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: SECTIONS.home.tabLabel,
+        }}
+      />
+      <Tabs.Screen
+        name="other"
+        options={{
+          title: SECTIONS.personal.tabLabel,
         }}
       />
     </Tabs>
