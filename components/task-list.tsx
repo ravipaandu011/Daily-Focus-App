@@ -282,7 +282,7 @@ export const TaskList: React.FC<TaskListProps> = ({
             )}
           </View>
 
-          {/* Contextual Action Bar: appears cleanly when tasks are selected */}
+          {/* Contextual Action Bar: pure stadium rounded and compact */}
           {hasSelection && (
             <View
               style={[
@@ -299,7 +299,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 style={styles.actionBtnWrapper}>
                 <Ionicons
                   name={activeItem?.completed ? 'checkmark-circle' : 'checkmark-circle-outline'}
-                  size={19}
+                  size={16.5}
                   color="#10B981"
                 />
                 <Text style={[styles.actionBtnLabel, { color: theme.text }]}>
@@ -312,7 +312,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 activeOpacity={0.7}
                 onPress={handleToolbarFocus}
                 style={styles.actionBtnWrapper}>
-                <Ionicons name="timer-outline" size={19} color="#3B82F6" />
+                <Ionicons name="timer-outline" size={16.5} color="#3B82F6" />
                 <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Timer</Text>
               </TouchableOpacity>
 
@@ -323,7 +323,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 style={styles.actionBtnWrapper}>
                 <Ionicons
                   name={activeItem?.pinned ? 'star' : 'star-outline'}
-                  size={19}
+                  size={16.5}
                   color="#F59E0B"
                 />
                 <Text style={[styles.actionBtnLabel, { color: theme.text }]}>
@@ -338,7 +338,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 style={styles.actionBtnWrapper}>
                 <Ionicons
                   name="arrow-forward-circle-outline"
-                  size={19}
+                  size={16.5}
                   color="#06B6D4"
                 />
                 <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Tomorrow</Text>
@@ -349,7 +349,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 activeOpacity={0.7}
                 onPress={handleToolbarTransfer}
                 style={styles.actionBtnWrapper}>
-                <Ionicons name="swap-horizontal" size={19} color="#8B5CF6" />
+                <Ionicons name="swap-horizontal" size={16.5} color="#8B5CF6" />
                 <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Transfer</Text>
               </TouchableOpacity>
 
@@ -358,7 +358,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 activeOpacity={0.7}
                 onPress={handleToolbarEdit}
                 style={styles.actionBtnWrapper}>
-                <Ionicons name="pencil-outline" size={19} color="#64748B" />
+                <Ionicons name="pencil-outline" size={16.5} color="#64748B" />
                 <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Edit</Text>
               </TouchableOpacity>
 
@@ -367,7 +367,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 activeOpacity={0.7}
                 onPress={handleToolbarDelete}
                 style={styles.actionBtnWrapper}>
-                <Ionicons name="trash-outline" size={19} color="#EF4444" />
+                <Ionicons name="trash-outline" size={16.5} color="#EF4444" />
                 <Text style={[styles.actionBtnLabel, { color: '#EF4444' }]}>Delete</Text>
               </TouchableOpacity>
             </View>
@@ -429,30 +429,31 @@ const styles = StyleSheet.create({
   contextualActionBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingHorizontal: 8,
-    paddingVertical: 10,
-    borderRadius: 22,
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 9999,
     borderWidth: 1,
     marginBottom: 10,
-    marginTop: 4,
+    marginTop: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   actionBtnWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
-    minWidth: 42,
-    gap: 3,
+    paddingHorizontal: 2,
+    minWidth: 36,
+    gap: 2,
   },
   actionBtnLabel: {
-    fontSize: 9.5,
+    fontSize: 8.5,
     fontWeight: '700',
     letterSpacing: -0.1,
+    lineHeight: 11,
   },
   emptyContainer: {
     alignItems: 'center',
