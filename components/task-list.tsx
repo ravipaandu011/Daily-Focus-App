@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Platform,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
-import { TodoItem } from '@/types/todo';
+import { TaskItem } from '@/components/task-item';
 import { SectionConfig } from '@/constants/sections';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { TaskItem } from '@/components/task-item';
+import { TodoItem } from '@/types/todo';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useState } from 'react';
+import {
+  FlatList,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 interface TaskListProps {
   todos: TodoItem[];
@@ -331,17 +331,17 @@ export const TaskList: React.FC<TaskListProps> = ({
                 colors={
                   colorScheme === 'dark'
                     ? [
-                        'rgba(255, 255, 255, 0.12)',
-                        'rgba(255, 255, 255, 0.02)',
-                        'rgba(255, 255, 255, 0.09)',
-                        'rgba(255, 255, 255, 0.02)',
-                      ]
+                      'rgba(255, 255, 255, 0.12)',
+                      'rgba(255, 255, 255, 0.02)',
+                      'rgba(255, 255, 255, 0.09)',
+                      'rgba(255, 255, 255, 0.02)',
+                    ]
                     : [
-                        'rgba(255, 255, 255, 0.38)',
-                        'rgba(255, 255, 255, 0.08)',
-                        'rgba(255, 255, 255, 0.25)',
-                        'rgba(255, 255, 255, 0.08)',
-                      ]
+                      'rgba(255, 255, 255, 0.9)',
+                      'rgba(255, 255, 255, 0.9)',
+                      'rgba(255, 255, 255, 0.9)',
+                      'rgba(255, 255, 255, 0.9)',
+                    ]
                 }
                 locations={[0, 0.38, 0.68, 1]}
                 start={{ x: 0, y: 0 }}
