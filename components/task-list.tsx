@@ -316,18 +316,18 @@ export const TaskList: React.FC<TaskListProps> = ({
                 <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Timer</Text>
               </TouchableOpacity>
 
-              {/* 3. Star / Pin */}
+              {/* 3. Pin */}
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={handleToolbarPin}
                 style={styles.actionBtnWrapper}>
                 <Ionicons
-                  name={activeItem?.pinned ? 'star' : 'star-outline'}
-                  size={16.5}
+                  name={activeItem?.pinned ? 'pin' : 'pin-outline'}
+                  size={16}
                   color="#F59E0B"
                 />
                 <Text style={[styles.actionBtnLabel, { color: theme.text }]}>
-                  {activeItem?.pinned ? 'Unpin' : 'Star'}
+                  {activeItem?.pinned ? 'Unpin' : 'Pin'}
                 </Text>
               </TouchableOpacity>
 
@@ -338,7 +338,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 style={styles.actionBtnWrapper}>
                 <Ionicons
                   name="arrow-forward-circle-outline"
-                  size={16.5}
+                  size={16}
                   color="#06B6D4"
                 />
                 <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Tomorrow</Text>
@@ -349,7 +349,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 activeOpacity={0.7}
                 onPress={handleToolbarTransfer}
                 style={styles.actionBtnWrapper}>
-                <Ionicons name="swap-horizontal" size={16.5} color="#8B5CF6" />
+                <Ionicons name="swap-horizontal" size={16} color="#8B5CF6" />
                 <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Transfer</Text>
               </TouchableOpacity>
 
@@ -358,7 +358,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 activeOpacity={0.7}
                 onPress={handleToolbarEdit}
                 style={styles.actionBtnWrapper}>
-                <Ionicons name="pencil-outline" size={16.5} color="#64748B" />
+                <Ionicons name="pencil-outline" size={16} color="#64748B" />
                 <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Edit</Text>
               </TouchableOpacity>
 
@@ -367,7 +367,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 activeOpacity={0.7}
                 onPress={handleToolbarDelete}
                 style={styles.actionBtnWrapper}>
-                <Ionicons name="trash-outline" size={16.5} color="#EF4444" />
+                <Ionicons name="trash-outline" size={16} color="#EF4444" />
                 <Text style={[styles.actionBtnLabel, { color: '#EF4444' }]}>Delete</Text>
               </TouchableOpacity>
             </View>
@@ -429,9 +429,10 @@ const styles = StyleSheet.create({
   contextualActionBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    justifyContent: 'space-around',
+    marginHorizontal: 16,
+    paddingHorizontal: 6,
+    paddingVertical: 6,
     borderRadius: 9999,
     borderWidth: 1,
     marginBottom: 10,
@@ -445,8 +446,8 @@ const styles = StyleSheet.create({
   actionBtnWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 2,
-    minWidth: 36,
+    paddingHorizontal: 1,
+    minWidth: 34,
     gap: 2,
   },
   actionBtnLabel: {
