@@ -70,16 +70,18 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
 
   return (
     <TouchableOpacity
-      activeOpacity={0.84}
+      activeOpacity={0.85}
       onPress={handleCardPress}
       style={[
         styles.container,
         {
           backgroundColor: isSelected
             ? colorScheme === 'dark'
-              ? '#1E293B'
-              : '#EFF6FF'
-            : theme.card,
+              ? `${sectionConfig.color}28`
+              : `${sectionConfig.color}12`
+            : colorScheme === 'dark'
+            ? 'rgba(30, 41, 59, 0.85)'
+            : '#FFFFFF',
           borderColor: isSelected
             ? sectionConfig.color
             : item.pinned
@@ -87,15 +89,18 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
             : item.completed
             ? theme.cardBorder
             : colorScheme === 'dark'
-            ? `${sectionConfig.color}35`
-            : theme.cardBorder,
-          borderWidth: isSelected ? 2 : 1,
+            ? 'rgba(51, 65, 85, 0.65)'
+            : 'rgba(226, 232, 240, 0.9)',
+          borderWidth: isSelected ? 1.5 : 1,
+          shadowColor: isSelected ? sectionConfig.color : '#000000',
+          shadowOpacity: isSelected ? (colorScheme === 'dark' ? 0.35 : 0.15) : (colorScheme === 'dark' ? 0.2 : 0.05),
+          shadowRadius: isSelected ? 10 : 8,
         },
         item.completed && styles.completedContainer,
       ]}>
       {/* Main Row: Rounded Checkbox, Text, Badges */}
       <View style={styles.mainRow}>
-        {/* Checkbox: Rounded Squircle */}
+        {/* Checkbox: Radiant Gradient Checkmark (Style 2) */}
         <TouchableOpacity
           accessibilityRole="checkbox"
           accessibilityState={{ checked: isChecked }}
@@ -108,8 +113,8 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
               colors={sectionConfig.gradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.checkboxGradient}>
-              <Ionicons name="checkmark" size={15} color="#FFFFFF" />
+              style={[styles.checkboxGradient, { shadowColor: sectionConfig.color }]}>
+              <Ionicons name="checkmark" size={14} color="#FFFFFF" />
             </LinearGradient>
           ) : (
             <View
@@ -119,8 +124,11 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
                   borderColor: isSelected
                     ? sectionConfig.color
                     : colorScheme === 'dark'
-                    ? '#475569'
+                    ? '#64748B'
                     : '#CBD5E1',
+                  backgroundColor: isSelected
+                    ? `${sectionConfig.color}15`
+                    : 'transparent',
                 },
               ]}
             />
@@ -250,16 +258,14 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 14,
+    paddingVertical: 13,
     paddingHorizontal: 16,
     marginHorizontal: 16,
-    marginBottom: 10,
-    borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
+    marginBottom: 9,
+    borderRadius: 9999,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
+    elevation: 2,
     gap: 8,
   },
   mainRow: {
@@ -267,23 +273,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   completedContainer: {
-    opacity: 0.65,
+    opacity: 0.6,
   },
   checkboxTouch: {
     marginRight: 12,
   },
   checkboxGradient: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 25,
+    height: 25,
+    borderRadius: 12.5,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.45)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
+    elevation: 2,
   },
   checkboxEmpty: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 2,
+    width: 25,
+    height: 25,
+    borderRadius: 12.5,
+    borderWidth: 1.8,
   },
   textContainer: {
     flex: 1,
@@ -337,8 +349,9 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 22,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+    lineHeight: 21,
   },
   completedText: {
     textDecorationLine: 'line-through',
