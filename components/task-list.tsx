@@ -282,7 +282,7 @@ export const TaskList: React.FC<TaskListProps> = ({
             )}
           </View>
 
-          {/* Contextual Action Bar: pure stadium rounded and transparent background */}
+          {/* Contextual Action Bar: pure stadium rounded and ultra-transparent */}
           {hasSelection && (
             <View
               style={[
@@ -290,12 +290,12 @@ export const TaskList: React.FC<TaskListProps> = ({
                 {
                   backgroundColor:
                     colorScheme === 'dark'
-                      ? 'rgba(30, 41, 59, 0.45)'
-                      : 'rgba(241, 245, 249, 0.6)',
+                      ? 'rgba(30, 41, 59, 0.20)'
+                      : 'rgba(241, 245, 249, 0.25)',
                   borderColor:
                     colorScheme === 'dark'
-                      ? 'rgba(51, 65, 85, 0.5)'
-                      : 'rgba(226, 232, 240, 0.65)',
+                      ? 'rgba(51, 65, 85, 0.30)'
+                      : 'rgba(226, 232, 240, 0.45)',
                 },
               ]}>
               {/* 1. Mark Done / Pending */}
