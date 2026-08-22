@@ -75,13 +75,8 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
       style={[
         styles.container,
         {
-          backgroundColor: isSelected
-            ? colorScheme === 'dark'
-              ? `${sectionConfig.color}28`
-              : `${sectionConfig.color}12`
-            : colorScheme === 'dark'
-            ? 'rgba(30, 41, 59, 0.85)'
-            : '#FFFFFF',
+          backgroundColor:
+            colorScheme === 'dark' ? 'rgba(30, 41, 59, 0.85)' : '#FFFFFF',
           borderColor: isSelected
             ? sectionConfig.color
             : item.pinned
@@ -91,10 +86,16 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
             : colorScheme === 'dark'
             ? 'rgba(51, 65, 85, 0.65)'
             : 'rgba(226, 232, 240, 0.9)',
-          borderWidth: isSelected ? 1.5 : 1,
+          borderWidth: isSelected ? 1.8 : 1,
           shadowColor: isSelected ? sectionConfig.color : '#000000',
-          shadowOpacity: isSelected ? (colorScheme === 'dark' ? 0.35 : 0.15) : (colorScheme === 'dark' ? 0.2 : 0.05),
-          shadowRadius: isSelected ? 10 : 8,
+          shadowOpacity: isSelected
+            ? colorScheme === 'dark'
+              ? 0.35
+              : 0.12
+            : colorScheme === 'dark'
+            ? 0.2
+            : 0.04,
+          shadowRadius: isSelected ? 8 : 6,
         },
         item.completed && styles.completedContainer,
       ]}>
@@ -126,9 +127,7 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
                     : colorScheme === 'dark'
                     ? '#64748B'
                     : '#CBD5E1',
-                  backgroundColor: isSelected
-                    ? `${sectionConfig.color}15`
-                    : 'transparent',
+                  backgroundColor: 'transparent',
                 },
               ]}
             />

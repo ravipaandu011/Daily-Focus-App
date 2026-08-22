@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -40,6 +41,7 @@ const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
   const theme = Colors[colorScheme];
   const isDark = colorScheme === 'dark';
   const scrollViewRef = useRef<ScrollView>(null);
+  const { width: screenWidth } = useWindowDimensions();
 
   const today = getTodayKey();
   const monthYearLabel = useMemo(() => formatMonthYear(selectedDate), [selectedDate]);
@@ -49,14 +51,16 @@ const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
     return getSurroundingDateKeys(today, 7, 14);
   }, [today]);
 
-  // Auto-scroll to center the selected date on load and when selectedDate changes
+  // Auto-scroll to center the selected date precisely on load and selection change
   useEffect(() => {
     const selectedIndex = dateKeys.indexOf(selectedDate);
     if (selectedIndex >= 0 && scrollViewRef.current) {
-      const scrollX = Math.max(0, selectedIndex * (CHIP_SIZE + CHIP_GAP) - (CHIP_SIZE * 2));
+      const cardWidth = screenWidth - 32;
+      const itemOffset = selectedIndex * (CHIP_SIZE + CHIP_GAP) + 16;
+      const scrollX = Math.max(0, itemOffset - cardWidth / 2 + CHIP_SIZE / 2);
       scrollViewRef.current.scrollTo({ x: scrollX, animated: true });
     }
-  }, [selectedDate, dateKeys]);
+  }, [selectedDate, dateKeys, screenWidth]);
 
   const handleSelect = (key: string) => {
     if (Platform.OS !== 'web') {
@@ -238,7 +242,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   ribbonScroll: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     gap: CHIP_GAP,
     alignItems: 'center',
   },
