@@ -282,110 +282,101 @@ export const TaskList: React.FC<TaskListProps> = ({
             )}
           </View>
 
-          {/* Clean slight action icons under Tasks heading */}
-          {todos.length > 0 && (
-            <View style={styles.toolbarIconsRow}>
+          {/* Contextual Action Bar: appears cleanly when tasks are selected */}
+          {hasSelection && (
+            <View
+              style={[
+                styles.contextualActionBar,
+                {
+                  backgroundColor: theme.card,
+                  borderColor: theme.cardBorder,
+                },
+              ]}>
               {/* 1. Mark Done / Pending */}
               <TouchableOpacity
-                activeOpacity={0.65}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                disabled={!hasSelection}
+                activeOpacity={0.7}
                 onPress={handleToolbarComplete}
-                style={[
-                  styles.iconOnlyBtn,
-                  { opacity: hasSelection ? 1 : 0.35 },
-                ]}>
+                style={styles.actionBtnWrapper}>
                 <Ionicons
                   name={activeItem?.completed ? 'checkmark-circle' : 'checkmark-circle-outline'}
-                  size={21}
+                  size={19}
                   color="#10B981"
                 />
+                <Text style={[styles.actionBtnLabel, { color: theme.text }]}>
+                  {activeItem?.completed ? 'Undo' : 'Done'}
+                </Text>
               </TouchableOpacity>
 
               {/* 2. Focus Timer (Single Task) */}
-              <TouchableOpacity
-                activeOpacity={0.65}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                disabled={!activeItem || isMultiSelect}
-                onPress={handleToolbarFocus}
-                style={[
-                  styles.iconOnlyBtn,
-                  { opacity: activeItem && !isMultiSelect ? 1 : 0.35 },
-                ]}>
-                <Ionicons name="timer-outline" size={21} color="#3B82F6" />
-              </TouchableOpacity>
+              {!isMultiSelect && activeItem && (
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={handleToolbarFocus}
+                  style={styles.actionBtnWrapper}>
+                  <Ionicons name="timer-outline" size={19} color="#3B82F6" />
+                  <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Timer</Text>
+                </TouchableOpacity>
+              )}
 
               {/* 3. Star / Pin (Single Task) */}
-              <TouchableOpacity
-                activeOpacity={0.65}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                disabled={!activeItem || isMultiSelect}
-                onPress={handleToolbarPin}
-                style={[
-                  styles.iconOnlyBtn,
-                  { opacity: activeItem && !isMultiSelect ? 1 : 0.35 },
-                ]}>
-                <Ionicons
-                  name={activeItem?.pinned ? 'star' : 'star-outline'}
-                  size={21}
-                  color="#F59E0B"
-                />
-              </TouchableOpacity>
+              {!isMultiSelect && activeItem && (
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={handleToolbarPin}
+                  style={styles.actionBtnWrapper}>
+                  <Ionicons
+                    name={activeItem?.pinned ? 'star' : 'star-outline'}
+                    size={19}
+                    color="#F59E0B"
+                  />
+                  <Text style={[styles.actionBtnLabel, { color: theme.text }]}>
+                    {activeItem?.pinned ? 'Unpin' : 'Star'}
+                  </Text>
+                </TouchableOpacity>
+              )}
 
-              {/* 4. Tomorrow */}
+              {/* 4. Move to Tomorrow */}
               <TouchableOpacity
-                activeOpacity={0.65}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                disabled={!hasSelection}
+                activeOpacity={0.7}
                 onPress={handleToolbarTomorrow}
-                style={[
-                  styles.iconOnlyBtn,
-                  { opacity: hasSelection ? 1 : 0.35 },
-                ]}>
+                style={styles.actionBtnWrapper}>
                 <Ionicons
                   name="arrow-forward-circle-outline"
-                  size={21}
+                  size={19}
                   color="#06B6D4"
                 />
+                <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Tomorrow</Text>
               </TouchableOpacity>
 
-              {/* 5. Move / Transfer Category (Single Task) */}
-              <TouchableOpacity
-                activeOpacity={0.65}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                disabled={!activeItem || isMultiSelect}
-                onPress={handleToolbarTransfer}
-                style={[
-                  styles.iconOnlyBtn,
-                  { opacity: activeItem && !isMultiSelect ? 1 : 0.35 },
-                ]}>
-                <Ionicons name="swap-horizontal" size={21} color="#8B5CF6" />
-              </TouchableOpacity>
+              {/* 5. Transfer Category (Single Task) */}
+              {!isMultiSelect && activeItem && (
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={handleToolbarTransfer}
+                  style={styles.actionBtnWrapper}>
+                  <Ionicons name="swap-horizontal" size={19} color="#8B5CF6" />
+                  <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Transfer</Text>
+                </TouchableOpacity>
+              )}
 
               {/* 6. Edit Details (Single Task) */}
-              <TouchableOpacity
-                activeOpacity={0.65}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                disabled={!activeItem || isMultiSelect}
-                onPress={handleToolbarEdit}
-                style={[
-                  styles.iconOnlyBtn,
-                  { opacity: activeItem && !isMultiSelect ? 1 : 0.35 },
-                ]}>
-                <Ionicons name="pencil-outline" size={20} color="#64748B" />
-              </TouchableOpacity>
+              {!isMultiSelect && activeItem && (
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={handleToolbarEdit}
+                  style={styles.actionBtnWrapper}>
+                  <Ionicons name="pencil-outline" size={19} color="#64748B" />
+                  <Text style={[styles.actionBtnLabel, { color: theme.text }]}>Edit</Text>
+                </TouchableOpacity>
+              )}
 
               {/* 7. Delete */}
               <TouchableOpacity
-                activeOpacity={0.65}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                disabled={!hasSelection}
+                activeOpacity={0.7}
                 onPress={handleToolbarDelete}
-                style={[
-                  styles.iconOnlyBtn,
-                  { opacity: hasSelection ? 1 : 0.35 },
-                ]}>
-                <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                style={styles.actionBtnWrapper}>
+                <Ionicons name="trash-outline" size={19} color="#EF4444" />
+                <Text style={[styles.actionBtnLabel, { color: '#EF4444' }]}>Delete</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -436,26 +427,40 @@ const styles = StyleSheet.create({
     gap: 5,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 14, // Material pill radius
+    borderRadius: 9999, // Material pill radius
     borderWidth: 1,
   },
   selectAllText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
-  toolbarIconsRow: {
+  contextualActionBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    marginBottom: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+    borderRadius: 22,
+    borderWidth: 1,
+    marginBottom: 10,
+    marginTop: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  iconOnlyBtn: {
-    padding: 8,
-    borderRadius: 12,
+  actionBtnWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 4,
+    minWidth: 42,
+    gap: 3,
+  },
+  actionBtnLabel: {
+    fontSize: 9.5,
+    fontWeight: '700',
+    letterSpacing: -0.1,
   },
   emptyContainer: {
     alignItems: 'center',
