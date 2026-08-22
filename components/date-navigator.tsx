@@ -27,7 +27,7 @@ interface DateNavigatorProps {
   onOpenCalendar?: () => void;
 }
 
-const CHIP_WIDTH = 44;
+const CHIP_SIZE = 46;
 const CHIP_GAP = 6;
 
 const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
@@ -53,7 +53,7 @@ const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
   useEffect(() => {
     const selectedIndex = dateKeys.indexOf(selectedDate);
     if (selectedIndex >= 0 && scrollViewRef.current) {
-      const scrollX = Math.max(0, selectedIndex * (CHIP_WIDTH + CHIP_GAP) - (CHIP_WIDTH * 2));
+      const scrollX = Math.max(0, selectedIndex * (CHIP_SIZE + CHIP_GAP) - (CHIP_SIZE * 2));
       scrollViewRef.current.scrollTo({ x: scrollX, animated: true });
     }
   }, [selectedDate, dateKeys]);
@@ -175,11 +175,12 @@ const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
 const styles = StyleSheet.create({
   cardContainer: {
     marginHorizontal: 16,
-    marginBottom: 8,
-    paddingTop: 8,
-    paddingBottom: 8,
-    borderRadius: 24,
+    marginBottom: 10,
+    paddingTop: 10,
+    paddingBottom: 10,
+    borderRadius: 28,
     borderWidth: 1,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -190,8 +191,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    marginBottom: 6,
+    paddingHorizontal: 16,
+    marginBottom: 8,
   },
   monthSelectorTouch: {
     flexDirection: 'row',
@@ -204,43 +205,45 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   calendarIconBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: 9999,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   ribbonScroll: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 14,
     gap: CHIP_GAP,
     alignItems: 'center',
   },
   dateChipWrapper: {
-    width: CHIP_WIDTH,
+    width: CHIP_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dateChipActive: {
-    width: CHIP_WIDTH,
-    height: 50,
-    borderRadius: 9999,
+    width: CHIP_SIZE,
+    height: CHIP_SIZE,
+    borderRadius: CHIP_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 255, 255, 0.45)',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 4,
   },
   dateChipInactive: {
-    width: CHIP_WIDTH,
-    height: 50,
-    borderRadius: 9999,
+    width: CHIP_SIZE,
+    height: CHIP_SIZE,
+    borderRadius: CHIP_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 2,
   },
   weekdayTextActive: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 9,
+    color: 'rgba(255, 255, 255, 0.95)',
+    fontSize: 8.5,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.2,
@@ -248,23 +251,23 @@ const styles = StyleSheet.create({
   },
   dayNumberActive: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 14.5,
     fontWeight: '900',
     letterSpacing: -0.3,
-    lineHeight: 18,
+    lineHeight: 17,
   },
   weekdayTextInactive: {
-    fontSize: 9,
+    fontSize: 8.5,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.2,
     marginBottom: 1,
   },
   dayNumberInactive: {
-    fontSize: 15,
+    fontSize: 14.5,
     fontWeight: '800',
     letterSpacing: -0.3,
-    lineHeight: 18,
+    lineHeight: 17,
   },
 });
 

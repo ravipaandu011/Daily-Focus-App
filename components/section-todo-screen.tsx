@@ -371,7 +371,7 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
         accessibilityLabel={`Add new task to ${sectionConfig.tabLabel}`}
         activeOpacity={0.88}
         onPress={handleOpenAddModal}
-        style={styles.fabTouchable}>
+        style={[styles.fabTouchable, { shadowColor: sectionConfig.color }]}>
         <LinearGradient
           colors={sectionConfig.gradient}
           start={{ x: 0, y: 0 }}
@@ -529,11 +529,13 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 255, 255, 0.45)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   headerTitle: {
     fontSize: 18,
@@ -598,11 +600,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     bottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.38,
+    shadowRadius: 14,
+    elevation: 8,
   },
   fabGradient: {
     width: 64,
@@ -610,5 +611,7 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.45)',
   },
 });

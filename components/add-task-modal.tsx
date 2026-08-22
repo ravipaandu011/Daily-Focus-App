@@ -486,7 +486,7 @@ export const AddTaskModal: React.FC<AddTaskModalProps> = ({
                     onPress={handleSubmit}
                     disabled={!text.trim()}
                     activeOpacity={0.85}
-                    style={styles.submitTouchable}>
+                    style={[styles.submitTouchable, { shadowColor: sectionConfig.color }]}>
                     <LinearGradient
                       colors={sectionConfig.gradient}
                       start={{ x: 0, y: 0 }}
@@ -719,17 +719,18 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   submitTouchable: {
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
   },
   submitBtnGradient: {
     height: 52,
     borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 255, 255, 0.45)',
   },
   submitBtnText: {
     color: '#FFFFFF',

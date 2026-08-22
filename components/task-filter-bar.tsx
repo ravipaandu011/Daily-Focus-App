@@ -97,7 +97,7 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
               colors={sectionConfig.gradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.chipActive}
+              style={[styles.chipActive, { shadowColor: sectionConfig.color }]}
             >
               <Text style={styles.chipTextActive}>All ({totalCount})</Text>
             </LinearGradient>
@@ -131,7 +131,7 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
               colors={sectionConfig.gradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.chipActive}
+              style={[styles.chipActive, { shadowColor: sectionConfig.color }]}
             >
               <Text style={styles.chipTextActive}>
                 Pending ({pendingCount})
@@ -167,7 +167,7 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
               colors={sectionConfig.gradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.chipActive}
+              style={[styles.chipActive, { shadowColor: sectionConfig.color }]}
             >
               <Text style={styles.chipTextActive}>Done ({completedCount})</Text>
             </LinearGradient>
@@ -237,11 +237,12 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1.2,
+    borderColor: "rgba(255, 255, 255, 0.45)",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 3,
   },
   chipInactive: {
     paddingVertical: 9,

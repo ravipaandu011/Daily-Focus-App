@@ -437,7 +437,7 @@ export const FocusTimerModal: React.FC<FocusTimerModalProps> = ({
             <TouchableOpacity
               activeOpacity={0.88}
               onPress={toggleTimer}
-              style={styles.playBtnTouchable}>
+              style={[styles.playBtnTouchable, { shadowColor: sectionConfig.color }]}>
               <LinearGradient
                 colors={sectionConfig.gradient}
                 start={{ x: 0, y: 0 }}
@@ -693,11 +693,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   playBtnTouchable: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.42,
+    shadowRadius: 14,
+    elevation: 8,
   },
   playBtnGradient: {
     width: 68,
@@ -705,6 +704,8 @@ const styles = StyleSheet.create({
     borderRadius: 34,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.45)',
   },
   completeActionTouchable: {
     marginTop: 4,

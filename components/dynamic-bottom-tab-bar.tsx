@@ -134,7 +134,7 @@ const DynamicBottomTabBarComponent: React.FC = () => {
                     colors={conf.gradient}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={styles.focusedIconWrapper}>
+                    style={[styles.focusedIconWrapper, { shadowColor: conf.color }]}>
                     {isCustom ? (
                       <Text style={styles.focusedEmoji}>{conf.emoji}</Text>
                     ) : (
@@ -374,16 +374,17 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   focusedIconWrapper: {
-    width: 38,
+    width: 44,
     height: 32,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 255, 255, 0.45)',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 4,
   },
   inactiveIconWrapper: {
     width: 38,

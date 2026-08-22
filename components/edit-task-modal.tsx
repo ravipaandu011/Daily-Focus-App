@@ -331,7 +331,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
                   onPress={handleSubmit}
                   disabled={!text.trim()}
                   activeOpacity={0.85}
-                  style={styles.submitTouchable}>
+                  style={[styles.submitTouchable, { shadowColor: sectionConfig.color }]}>
                   <LinearGradient
                     colors={sectionConfig.gradient}
                     start={{ x: 0, y: 0 }}
@@ -481,22 +481,23 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   submitTouchable: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
     marginTop: 10,
   },
   submitBtnGradient: {
     height: 52,
-    borderRadius: 18, // Material 3 Rounded Button
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 255, 255, 0.45)',
   },
   submitBtnText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
   },
 });
