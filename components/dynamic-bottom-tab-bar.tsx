@@ -55,15 +55,8 @@ const DynamicBottomTabBarComponent: React.FC = () => {
         Haptics.selectionAsync();
       }
       setActiveCategoryKey(key);
-
-      if (key === 'work') router.navigate('/(tabs)');
-      else if (key === 'education') router.navigate('/(tabs)/education');
-      else if (key === 'gym') router.navigate('/(tabs)/gym');
-      else if (key === 'home') router.navigate('/(tabs)/home');
-      else if (key === 'personal') router.navigate('/(tabs)/other');
-      else router.navigate('/(tabs)');
     },
-    [router, setActiveCategoryKey]
+    [setActiveCategoryKey]
   );
 
   const handleLongPressTab = React.useCallback(

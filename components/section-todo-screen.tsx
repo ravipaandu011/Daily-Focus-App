@@ -410,104 +410,126 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
       />
 
       {/* Add Task Modal with Subtasks, Recurrence, Batch & Tags */}
-      <AddTaskModal
-        visible={addModalVisible}
-        sectionConfig={sectionConfig}
-        initialDate={selectedDate}
-        onClose={() => setAddModalVisible(false)}
-        onAdd={handleAddTask}
-        onAddBatch={handleAddBatchTasks}
-      />
+      {addModalVisible && (
+        <AddTaskModal
+          visible={addModalVisible}
+          sectionConfig={sectionConfig}
+          initialDate={selectedDate}
+          onClose={() => setAddModalVisible(false)}
+          onAdd={handleAddTask}
+          onAddBatch={handleAddBatchTasks}
+        />
+      )}
 
       {/* Edit Task Modal */}
-      <EditTaskModal
-        visible={editingItem !== null}
-        item={editingItem}
-        sectionConfig={sectionConfig}
-        onClose={() => setEditingItem(null)}
-        onSave={handleEditTask}
-      />
+      {editingItem !== null && (
+        <EditTaskModal
+          visible={editingItem !== null}
+          item={editingItem}
+          sectionConfig={sectionConfig}
+          onClose={() => setEditingItem(null)}
+          onSave={handleEditTask}
+        />
+      )}
 
       {/* Focus / Pomodoro Timer Modal */}
-      <FocusTimerModal
-        visible={focusItem !== null}
-        item={focusItem}
-        onClose={() => setFocusItem(null)}
-        onCompleteTask={(id) => {
-          handleToggleTaskWithCelebration(id);
-          setFocusItem(null);
-        }}
-      />
+      {focusItem !== null && (
+        <FocusTimerModal
+          visible={focusItem !== null}
+          item={focusItem}
+          onClose={() => setFocusItem(null)}
+          onCompleteTask={(id) => {
+            handleToggleTaskWithCelebration(id);
+            setFocusItem(null);
+          }}
+        />
+      )}
 
       {/* Monthly Calendar Grid Modal */}
-      <CalendarModal
-        visible={calendarModalVisible}
-        selectedDate={selectedDate}
-        todos={todos}
-        onSelectDate={setSelectedDate}
-        onClose={() => setCalendarModalVisible(false)}
-      />
+      {calendarModalVisible && (
+        <CalendarModal
+          visible={calendarModalVisible}
+          selectedDate={selectedDate}
+          todos={todos}
+          onSelectDate={setSelectedDate}
+          onClose={() => setCalendarModalVisible(false)}
+        />
+      )}
 
       {/* 1-Tap Category Transfer & Task Duplication Modal */}
-      <TaskTransferModal
-        visible={transferItem !== null}
-        item={transferItem}
-        onClose={() => setTransferItem(null)}
-        onMoveSection={moveToSection}
-        onDuplicate={duplicateTodo}
-      />
+      {transferItem !== null && (
+        <TaskTransferModal
+          visible={transferItem !== null}
+          item={transferItem}
+          onClose={() => setTransferItem(null)}
+          onMoveSection={moveToSection}
+          onDuplicate={duplicateTodo}
+        />
+      )}
 
       {/* 100% Completion Confetti Celebration */}
-      <ConfettiCelebration
-        visible={celebrationVisible}
-        totalCompleted={totalCount}
-        streak={streak}
-        onClose={() => setCelebrationVisible(false)}
-      />
+      {celebrationVisible && (
+        <ConfettiCelebration
+          visible={celebrationVisible}
+          totalCompleted={totalCount}
+          streak={streak}
+          onClose={() => setCelebrationVisible(false)}
+        />
+      )}
 
       {/* Recycle Bin Modal */}
-      <RecycleBinModal
-        visible={binModalVisible}
-        binTodos={binTodos}
-        onClose={() => setBinModalVisible(false)}
-        onRestore={restoreFromBin}
-        onRestoreBatch={restoreBatchFromBin}
-        onDeletePermanently={deletePermanently}
-        onDeletePermanentlyBatch={deletePermanentlyBatch}
-        onEmptyBin={emptyBin}
-      />
+      {binModalVisible && (
+        <RecycleBinModal
+          visible={binModalVisible}
+          binTodos={binTodos}
+          onClose={() => setBinModalVisible(false)}
+          onRestore={restoreFromBin}
+          onRestoreBatch={restoreBatchFromBin}
+          onDeletePermanently={deletePermanently}
+          onDeletePermanentlyBatch={deletePermanentlyBatch}
+          onEmptyBin={emptyBin}
+        />
+      )}
 
       {/* Productivity Analytics & Gamification Modal */}
-      <AnalyticsModal
-        visible={analyticsModalVisible}
-        todos={todos}
-        onClose={() => setAnalyticsModalVisible(false)}
-      />
+      {analyticsModalVisible && (
+        <AnalyticsModal
+          visible={analyticsModalVisible}
+          todos={todos}
+          onClose={() => setAnalyticsModalVisible(false)}
+        />
+      )}
 
       {/* Settings, Standup Share & Backup Modal */}
-      <SettingsBackupModal
-        visible={settingsModalVisible}
-        todos={todos}
-        binTodos={binTodos}
-        selectedDate={selectedDate}
-        onClose={() => setSettingsModalVisible(false)}
-        onImportBackup={importBackupData}
-        onOpenAuth={promptAuthModal}
-        onOpenBin={() => setBinModalVisible(true)}
-      />
+      {settingsModalVisible && (
+        <SettingsBackupModal
+          visible={settingsModalVisible}
+          todos={todos}
+          binTodos={binTodos}
+          selectedDate={selectedDate}
+          onClose={() => setSettingsModalVisible(false)}
+          onImportBackup={importBackupData}
+          onOpenAuth={promptAuthModal}
+          onOpenBin={() => setBinModalVisible(true)}
+        />
+      )}
 
       {/* Custom Category Manager Modal */}
-      <CategoryManagerModal
-        visible={categoryModalVisible}
-        onClose={() => setCategoryModalVisible(false)}
-        onSelectCategory={(newKey) => setActiveCategoryKey(newKey)}
-      />
+      {categoryModalVisible && (
+        <CategoryManagerModal
+          visible={categoryModalVisible}
+          onClose={() => setCategoryModalVisible(false)}
+          onSelectCategory={(newKey) => setActiveCategoryKey(newKey)}
+        />
+      )}
 
       {/* Supabase Cloud Auth Modal (Sign In / Sign Up / Guest) */}
-      <AuthModal
-        visible={isAuthModalVisible}
-        onClose={closeAuthModal}
-      />
+      {isAuthModalVisible && (
+        <AuthModal
+          visible={isAuthModalVisible}
+          onClose={closeAuthModal}
+        />
+      )}
     </View>
   );
 };
