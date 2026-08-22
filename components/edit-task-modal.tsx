@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
-  Keyboard,
   ScrollView,
   BackHandler,
 } from 'react-native';
@@ -60,10 +59,6 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
       setSelectedRecurrence(item.recurrence || 'none');
       setSubtasks(item.subtasks || []);
       setSubtaskInput('');
-      const timer = setTimeout(() => {
-        inputRef.current?.focus();
-      }, 150);
-      return () => clearTimeout(timer);
     }
   }, [item, visible]);
 
@@ -130,7 +125,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
   };
 
   const handleClose = React.useCallback(() => {
-    Keyboard.dismiss();
+    inputRef.current?.blur();
     onClose();
   }, [onClose]);
 
@@ -153,7 +148,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
       statusBarTranslucent={true}
       onRequestClose={handleClose}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardAvoid}>
         <TouchableWithoutFeedback onPress={handleClose}>
           <View style={styles.backdrop}>

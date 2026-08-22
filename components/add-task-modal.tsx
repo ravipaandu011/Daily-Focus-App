@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
-  Keyboard,
   ScrollView,
   BackHandler,
 } from 'react-native';
@@ -85,10 +84,6 @@ export const AddTaskModal: React.FC<AddTaskModalProps> = ({
       setIsBatchMode(false);
       setShowAdvanced(false);
       setTargetDate(initialDate || getTodayKey());
-      const timer = setTimeout(() => {
-        inputRef.current?.focus();
-      }, 150);
-      return () => clearTimeout(timer);
     }
   }, [visible, initialDate]);
 
@@ -166,7 +161,7 @@ export const AddTaskModal: React.FC<AddTaskModalProps> = ({
   };
 
   const handleClose = React.useCallback(() => {
-    Keyboard.dismiss();
+    inputRef.current?.blur();
     onClose();
   }, [onClose]);
 
@@ -192,7 +187,7 @@ export const AddTaskModal: React.FC<AddTaskModalProps> = ({
       statusBarTranslucent={true}
       onRequestClose={handleClose}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardAvoid}>
         <TouchableWithoutFeedback onPress={handleClose}>
           <View style={styles.backdrop}>
