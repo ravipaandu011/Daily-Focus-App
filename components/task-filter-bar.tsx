@@ -10,7 +10,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
-import { StatusFilter } from "@/types/todo";
+import { StatusFilter, PriorityLevel } from "@/types/todo";
 import { SectionConfig } from "@/constants/sections";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -20,6 +20,8 @@ interface TaskFilterBarProps {
   onSearchChange: (q: string) => void;
   statusFilter: StatusFilter;
   onStatusFilterChange: (f: StatusFilter) => void;
+  priorityFilter?: PriorityLevel | 'all';
+  onPriorityFilterChange?: (p: PriorityLevel | 'all') => void;
   sectionConfig: SectionConfig;
   totalCount: number;
   pendingCount: number;
@@ -33,6 +35,8 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
   onSearchChange,
   statusFilter,
   onStatusFilterChange,
+  priorityFilter = 'all',
+  onPriorityFilterChange,
   sectionConfig,
   totalCount,
   pendingCount,
@@ -64,6 +68,16 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
     } else {
       setInternalSearchOpen(true);
     }
+  };
+
+  const handleCyclePriority = () => {
+    if (Platform.OS !== "web") {
+      Haptics.selectionAsync();
+    }
+    const order: (PriorityLevel | 'all')[] = ['all', 'high', 'medium', 'low'];
+    const currentIndex = order.indexOf(priorityFilter || 'all');
+    const nextPriority = order[(currentIndex + 1) % order.length];
+    onPriorityFilterChange?.(nextPriority);
   };
 
   const handleClearSearch = () => {
@@ -111,7 +125,7 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
         </View>
       )}
 
-      {/* Filter Status Chips Row + Search Pill */}
+      {/* Filter Status Chips Row + Priority Filter + Search Pill */}
       <View style={styles.filterChipsRow}>
         {/* All Chip */}
         <TouchableOpacity
@@ -217,6 +231,53 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
           )}
         </TouchableOpacity>
 
+        {/* Priority Filter Pill Button */}
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Filter by priority"
+          activeOpacity={0.8}
+          onPress={handleCyclePriority}
+          style={styles.searchPillTouchable}
+        >
+          {priorityFilter !== 'all' ? (
+            <View
+              style={[
+                styles.searchPillActive,
+                {
+                  backgroundColor:
+                    priorityFilter === 'high'
+                      ? '#EF4444'
+                      : priorityFilter === 'medium'
+                      ? '#F59E0B'
+                      : '#3B82F6',
+                  borderColor: 'rgba(255, 255, 255, 0.45)',
+                  shadowColor:
+                    priorityFilter === 'high'
+                      ? '#EF4444'
+                      : priorityFilter === 'medium'
+                      ? '#F59E0B'
+                      : '#3B82F6',
+                },
+              ]}
+            >
+              <Ionicons name="flag" size={13} color="#FFFFFF" />
+            </View>
+          ) : (
+            <View
+              style={[
+                styles.searchPillInactive,
+                { backgroundColor: theme.card, borderColor: theme.cardBorder },
+              ]}
+            >
+              <Ionicons
+                name="flag-outline"
+                size={13}
+                color={theme.textSecondary}
+              />
+            </View>
+          )}
+        </TouchableOpacity>
+
         {/* Search Pill Button */}
         <TouchableOpacity
           accessibilityRole="button"
@@ -235,7 +296,7 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
                 { shadowColor: sectionConfig.color },
               ]}
             >
-              <Ionicons name="search" size={15} color="#FFFFFF" />
+              <Ionicons name="search" size={14} color="#FFFFFF" />
             </LinearGradient>
           ) : (
             <View
@@ -246,7 +307,7 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
             >
               <Ionicons
                 name="search-outline"
-                size={15}
+                size={14}
                 color={theme.textSecondary}
               />
             </View>
@@ -359,6 +420,7 @@ export const TaskFilterBar = React.memo(
     return (
       prev.searchQuery === next.searchQuery &&
       prev.statusFilter === next.statusFilter &&
+      prev.priorityFilter === next.priorityFilter &&
       prev.totalCount === next.totalCount &&
       prev.pendingCount === next.pendingCount &&
       prev.completedCount === next.completedCount &&

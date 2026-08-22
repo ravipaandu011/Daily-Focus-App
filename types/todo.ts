@@ -16,6 +16,8 @@ export interface CustomCategory {
 
 export type StatusFilter = 'all' | 'pending' | 'completed';
 
+export type PriorityLevel = 'high' | 'medium' | 'low' | 'none';
+
 export type RecurrenceType = 'none' | 'daily' | 'weekdays' | 'weekly' | 'monthly';
 
 export interface SubtaskItem {
@@ -32,10 +34,12 @@ export interface TodoItem {
   section: SectionKey;
   date: string; // 'YYYY-MM-DD'
   pinned?: boolean;
+  priority?: PriorityLevel;
   tag?: string; // e.g. '15m', '30m', '1h', 'urgent', 'idea'
   recurrence?: RecurrenceType;
   subtasks?: SubtaskItem[];
   notes?: string;
+  order?: number;
   deletedAt?: number;
 }
 

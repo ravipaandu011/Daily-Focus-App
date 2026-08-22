@@ -73,12 +73,15 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
     setSearchQuery,
     statusFilter,
     setStatusFilter,
+    priorityFilter,
+    setPriorityFilter,
     streak,
     getSectionTodos,
     getPastPendingTasks,
     rolloverPastTasks,
     addTodo,
     addBatchTodos,
+    reorderTodos,
     toggleTodo,
     toggleSubtask,
     togglePinTodo,
@@ -350,6 +353,7 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
           onOpenTransfer={(item) => setTransferItem(item)}
           onEdit={(item) => setEditingItem(item)}
           onDelete={deleteTodo}
+          onReorder={reorderTodos}
           onToggleSubtask={toggleSubtask}
           onDeleteBatch={deleteBatchTodos}
           onToggleBatchComplete={toggleBatchComplete}
@@ -371,6 +375,8 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
                 onSearchChange={setSearchQuery}
                 statusFilter={statusFilter}
                 onStatusFilterChange={setStatusFilter}
+                priorityFilter={priorityFilter}
+                onPriorityFilterChange={setPriorityFilter}
                 sectionConfig={sectionConfig}
                 totalCount={totalCount}
                 pendingCount={pendingCount}

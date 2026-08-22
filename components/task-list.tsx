@@ -26,6 +26,7 @@ interface TaskListProps {
   onOpenTransfer: (item: TodoItem) => void;
   onEdit: (item: TodoItem) => void;
   onDelete: (id: string) => void;
+  onReorder?: (reorderedList: TodoItem[]) => void;
   onToggleSubtask?: (todoId: string, subtaskId: string) => void;
   onDeleteBatch?: (ids: string[]) => void;
   onToggleBatchComplete?: (ids: string[], completed: boolean) => void;
@@ -43,6 +44,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   onOpenTransfer,
   onEdit,
   onDelete,
+  onReorder,
   onToggleSubtask,
   onDeleteBatch,
   onToggleBatchComplete,
@@ -216,6 +218,36 @@ export const TaskList: React.FC<TaskListProps> = ({
     }
   };
 
+  const handleMoveUp = React.useCallback(
+    (id: string) => {
+      const index = todos.findIndex((t) => t.id === id);
+      if (index <= 0) return;
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+      const newTodos = [...todos];
+      const [moved] = newTodos.splice(index, 1);
+      newTodos.splice(index - 1, 0, moved);
+      onReorder?.(newTodos);
+    },
+    [todos, onReorder]
+  );
+
+  const handleMoveDown = React.useCallback(
+    (id: string) => {
+      const index = todos.findIndex((t) => t.id === id);
+      if (index < 0 || index >= todos.length - 1) return;
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+      const newTodos = [...todos];
+      const [moved] = newTodos.splice(index, 1);
+      newTodos.splice(index + 1, 0, moved);
+      onReorder?.(newTodos);
+    },
+    [todos, onReorder]
+  );
+
   const renderItem = React.useCallback(
     ({ item }: { item: TodoItem }) => (
       <TaskItem
@@ -225,9 +257,11 @@ export const TaskList: React.FC<TaskListProps> = ({
         onSelectTask={handleSelectTask}
         onToggle={onToggle}
         onToggleSubtask={onToggleSubtask}
+        onMoveUp={handleMoveUp}
+        onMoveDown={handleMoveDown}
       />
     ),
-    [sectionConfig, selectedIds, handleSelectTask, onToggle, onToggleSubtask]
+    [sectionConfig, selectedIds, handleSelectTask, onToggle, onToggleSubtask, handleMoveUp, handleMoveDown]
   );
 
   const renderEmptyComponent = React.useCallback(

@@ -15,11 +15,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { TodoItem, RecurrenceType, SubtaskItem } from '@/types/todo';
+import { TodoItem, RecurrenceType, SubtaskItem, PriorityLevel } from '@/types/todo';
 import { SectionConfig } from '@/constants/sections';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { RECURRENCE_OPTIONS } from '@/components/add-task-modal';
+import { RECURRENCE_OPTIONS, PRIORITY_OPTIONS } from '@/components/add-task-modal';
 
 interface EditTaskModalProps {
   visible: boolean;
@@ -29,6 +29,7 @@ interface EditTaskModalProps {
   onSave: (params: {
     id: string;
     text: string;
+    priority?: PriorityLevel;
     tag?: string;
     recurrence?: RecurrenceType;
     subtasks?: SubtaskItem[];
@@ -44,6 +45,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
   onSave,
 }) => {
   const [text, setText] = useState('');
+  const [selectedPriority, setSelectedPriority] = useState<PriorityLevel>('none');
   const [notes, setNotes] = useState('');
   const [selectedRecurrence, setSelectedRecurrence] = useState<RecurrenceType>('none');
   const [subtasks, setSubtasks] = useState<SubtaskItem[]>([]);
@@ -55,6 +57,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
   useEffect(() => {
     if (item && visible) {
       setText(item.text);
+      setSelectedPriority(item.priority || 'none');
       setNotes(item.notes || '');
       setSelectedRecurrence(item.recurrence || 'none');
       setSubtasks(item.subtasks || []);
@@ -115,6 +118,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
     onSave({
       id: item.id,
       text: trimmed,
+      priority: selectedPriority !== 'none' ? selectedPriority : undefined,
       tag: item.tag,
       recurrence: selectedRecurrence !== 'none' ? selectedRecurrence : undefined,
       subtasks: finalSubtasks.length > 0 ? finalSubtasks : undefined,
@@ -224,8 +228,52 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({
                     />
                   </View>
 
-                  {/* Recurrence Selector */}
+                  {/* Priority Selector */}
                   <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>
+                    Priority:
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.tagsScroll}>
+                    {PRIORITY_OPTIONS.map((p) => {
+                      const isSel = selectedPriority === p.key;
+                      return (
+                        <TouchableOpacity
+                          key={p.key}
+                          onPress={() => setSelectedPriority(p.key)}
+                          style={[
+                            styles.tagChip,
+                            {
+                              backgroundColor: isSel
+                                ? p.key === 'high'
+                                  ? '#EF4444'
+                                  : p.key === 'medium'
+                                  ? '#F59E0B'
+                                  : p.key === 'low'
+                                  ? '#3B82F6'
+                                  : colorScheme === 'dark' ? '#475569' : '#334155'
+                                : theme.inputBg,
+                              borderColor: isSel ? p.color : theme.cardBorder,
+                            },
+                          ]}>
+                          <Text
+                            style={[
+                              styles.tagText,
+                              {
+                                color: isSel ? '#FFFFFF' : theme.textSecondary,
+                                fontWeight: isSel ? '700' : '500',
+                              },
+                            ]}>
+                            {p.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+
+                  {/* Recurrence Selector */}
+                  <Text style={[styles.sectionLabel, { color: theme.textSecondary, marginTop: 12 }]}>
                     Auto-Repeat Recurrence:
                   </Text>
                   <ScrollView

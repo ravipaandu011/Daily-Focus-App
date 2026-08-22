@@ -22,6 +22,8 @@ interface TaskItemProps {
   onSelectTask?: (id: string) => void;
   onToggle: (id: string) => void;
   onToggleSubtask?: (todoId: string, subtaskId: string) => void;
+  onMoveUp?: (id: string) => void;
+  onMoveDown?: (id: string) => void;
 }
 
 const TaskItemComponent: React.FC<TaskItemProps> = ({
@@ -31,6 +33,8 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
   onSelectTask,
   onToggle,
   onToggleSubtask,
+  onMoveUp,
+  onMoveDown,
 }) => {
   const hasSubtasks = Boolean(item.subtasks && item.subtasks.length > 0);
   const [expandedSubtasks, setExpandedSubtasks] = useState<boolean>(hasSubtasks);
@@ -136,12 +140,54 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
 
         {/* Task Text & Badges */}
         <View style={styles.textContainer}>
-          {(item.pinned || (item.recurrence && item.recurrence !== 'none') || subtasksTotal > 0) && (
+          {(item.pinned || (item.priority && item.priority !== 'none') || (item.recurrence && item.recurrence !== 'none') || subtasksTotal > 0) && (
             <View style={styles.badgeRow}>
               {item.pinned && (
                 <View style={styles.pinnedBadge}>
                   <Ionicons name="star" size={10} color="#F59E0B" />
                   <Text style={styles.pinnedBadgeText}>PINNED</Text>
+                </View>
+              )}
+
+              {item.priority && item.priority !== 'none' && (
+                <View
+                  style={[
+                    styles.priorityBadge,
+                    {
+                      backgroundColor:
+                        item.priority === 'high'
+                          ? colorScheme === 'dark'
+                            ? 'rgba(239, 68, 68, 0.2)'
+                            : '#FEF2F2'
+                          : item.priority === 'medium'
+                          ? colorScheme === 'dark'
+                            ? 'rgba(245, 158, 11, 0.2)'
+                            : '#FFFBEB'
+                          : colorScheme === 'dark'
+                          ? 'rgba(59, 130, 246, 0.2)'
+                          : '#EFF6FF',
+                      borderColor:
+                        item.priority === 'high'
+                          ? '#EF4444'
+                          : item.priority === 'medium'
+                          ? '#F59E0B'
+                          : '#3B82F6',
+                    },
+                  ]}>
+                  <Text
+                    style={[
+                      styles.priorityBadgeText,
+                      {
+                        color:
+                          item.priority === 'high'
+                            ? '#EF4444'
+                            : item.priority === 'medium'
+                            ? '#F59E0B'
+                            : '#3B82F6',
+                      },
+                    ]}>
+                    {item.priority === 'high' ? '🔴 HIGH' : item.priority === 'medium' ? '🟡 MED' : '🔵 LOW'}
+                  </Text>
                 </View>
               )}
 
@@ -205,6 +251,28 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
             {item.text}
           </Text>
         </View>
+
+        {/* Reorder Chevrons when selected */}
+        {isSelected && (onMoveUp || onMoveDown) && (
+          <View style={styles.reorderColumn}>
+            {onMoveUp && (
+              <TouchableOpacity
+                onPress={() => onMoveUp(item.id)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={[styles.reorderBtn, { backgroundColor: theme.inputBg }]}>
+                <Ionicons name="chevron-up" size={13} color={sectionConfig.color} />
+              </TouchableOpacity>
+            )}
+            {onMoveDown && (
+              <TouchableOpacity
+                onPress={() => onMoveDown(item.id)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={[styles.reorderBtn, { backgroundColor: theme.inputBg }]}>
+                <Ionicons name="chevron-down" size={13} color={sectionConfig.color} />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </View>
 
       {/* Expandable Subtasks Checklist */}
@@ -322,6 +390,19 @@ const styles = StyleSheet.create({
     color: '#F59E0B',
     letterSpacing: 0.5,
   },
+  priorityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 9999,
+    borderWidth: 1,
+  },
+  priorityBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
   tagBadge: {
     paddingHorizontal: 10,
     paddingVertical: 3,
@@ -394,6 +475,20 @@ const styles = StyleSheet.create({
     color: '#3B82F6',
     fontWeight: '700',
   },
+  reorderColumn: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    marginLeft: 6,
+  },
+  reorderBtn: {
+    width: 24,
+    height: 20,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
 
 export const TaskItem = React.memo(TaskItemComponent, (prevProps, nextProps) => {
@@ -404,6 +499,8 @@ export const TaskItem = React.memo(TaskItemComponent, (prevProps, nextProps) => 
     prevProps.item.text === nextProps.item.text &&
     prevProps.item.completed === nextProps.item.completed &&
     prevProps.item.pinned === nextProps.item.pinned &&
+    prevProps.item.priority === nextProps.item.priority &&
+    prevProps.item.order === nextProps.item.order &&
     prevProps.item.tag === nextProps.item.tag &&
     prevProps.item.recurrence === nextProps.item.recurrence &&
     prevProps.item.notes === nextProps.item.notes &&

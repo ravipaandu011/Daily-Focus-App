@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { SectionKey, TodoItem, StatusFilter, RoutineTemplate, SubtaskItem, RecurrenceType } from '@/types/todo';
+import { SectionKey, TodoItem, StatusFilter, RoutineTemplate, SubtaskItem, RecurrenceType, PriorityLevel } from '@/types/todo';
 import {
   loadTodosFromStorage,
   saveTodosToStorage,
@@ -16,6 +16,7 @@ interface AddTodoParams {
   section: SectionKey;
   text: string;
   date?: string;
+  priority?: PriorityLevel;
   tag?: string;
   recurrence?: RecurrenceType;
   subtasks?: SubtaskItem[];
@@ -25,6 +26,7 @@ interface AddTodoParams {
 interface EditTodoParams {
   id: string;
   text: string;
+  priority?: PriorityLevel;
   tag?: string;
   recurrence?: RecurrenceType;
   subtasks?: SubtaskItem[];
@@ -42,6 +44,8 @@ interface TodoContextType {
   setSearchQuery: (q: string) => void;
   statusFilter: StatusFilter;
   setStatusFilter: (f: StatusFilter) => void;
+  priorityFilter: PriorityLevel | 'all';
+  setPriorityFilter: (p: PriorityLevel | 'all') => void;
   streak: number;
   getSectionTodos: (section: SectionKey, date?: string) => TodoItem[];
   getPastPendingTasks: (section: SectionKey) => TodoItem[];
@@ -49,6 +53,7 @@ interface TodoContextType {
   addTodo: (params: AddTodoParams | (SectionKey | string)[]) => Promise<void>;
   addBatchTodos: (section: SectionKey, texts: string[], date?: string, tag?: string) => Promise<void>;
   applyRoutine: (routine: RoutineTemplate, date?: string) => Promise<void>;
+  reorderTodos: (reorderedList: TodoItem[]) => Promise<void>;
   toggleTodo: (id: string) => Promise<void>;
   toggleSubtask: (todoId: string, subtaskId: string) => Promise<void>;
   togglePinTodo: (id: string) => Promise<void>;
@@ -86,10 +91,12 @@ function todoToDbRow(item: TodoItem, userId: string) {
     section: item.section,
     date: item.date,
     pinned: item.pinned ?? false,
+    priority: item.priority ?? 'none',
     tag: item.tag ?? null,
     recurrence: item.recurrence ?? null,
     subtasks: item.subtasks ? JSON.stringify(item.subtasks) : '[]',
     notes: item.notes ?? null,
+    order: item.order ?? null,
     created_at: item.createdAt,
   };
 }
@@ -113,10 +120,12 @@ function dbRowToTodo(row: any): TodoItem {
     section: row.section,
     date: row.date,
     pinned: Boolean(row.pinned),
+    priority: row.priority || undefined,
     tag: row.tag || undefined,
     recurrence: row.recurrence || undefined,
     subtasks: parsedSubtasks && parsedSubtasks.length > 0 ? parsedSubtasks : undefined,
     notes: row.notes || undefined,
+    order: row.order !== null && row.order !== undefined ? Number(row.order) : undefined,
   };
 }
 
@@ -130,6 +139,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [selectedDate, setSelectedDate] = useState<string>(getTodayKey());
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [priorityFilter, setPriorityFilter] = useState<PriorityLevel | 'all'>('all');
   const [lastDeletedTodo, setLastDeletedTodo] = useState<TodoItem | null>(null);
   const [isUndoVisible, setIsUndoVisible] = useState<boolean>(false);
 
@@ -349,6 +359,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       let section: SectionKey;
       let text: string;
       let date: string | undefined;
+      let priority: PriorityLevel | undefined;
       let tag: string | undefined;
       let recurrence: RecurrenceType | undefined;
       let subtasks: SubtaskItem[] | undefined;
@@ -358,6 +369,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
         section = args.section;
         text = args.text;
         date = args.date;
+        priority = args.priority;
         tag = args.tag;
         recurrence = args.recurrence;
         subtasks = args.subtasks;
@@ -382,6 +394,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
         section,
         date: targetDate,
         pinned: false,
+        priority: priority && priority !== 'none' ? priority : undefined,
         tag: tag || undefined,
         recurrence: recurrence && recurrence !== 'none' ? recurrence : undefined,
         subtasks: subtasks && subtasks.length > 0 ? subtasks : undefined,
@@ -397,6 +410,24 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       pushTodoToCloud(newTodo);
     },
     [selectedDate, user, pushTodoToCloud]
+  );
+
+  const reorderTodos = useCallback(
+    async (reorderedList: TodoItem[]) => {
+      setTodos((prev) => {
+        const idToOrder = new Map(reorderedList.map((item, index) => [item.id, index]));
+        const updated = prev.map((item) => {
+          if (idToOrder.has(item.id)) {
+            return { ...item, order: idToOrder.get(item.id) };
+          }
+          return item;
+        });
+        saveTodosToStorage(updated, user?.id ?? null);
+        return updated;
+      });
+      pushBatchToCloud(reorderedList);
+    },
+    [user, pushBatchToCloud]
   );
 
   const addBatchTodos = useCallback(
@@ -651,10 +682,12 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     async (args: any, textArg?: string, tagArg?: string) => {
       let id: string;
       let text: string;
+      let priority: PriorityLevel | undefined;
       let tag: string | undefined;
       let recurrence: RecurrenceType | undefined;
       let subtasks: SubtaskItem[] | undefined;
       let notes: string | undefined;
+      let hasPriorityInArgs = false;
       let hasSubtasksInArgs = false;
       let hasNotesInArgs = false;
       let hasRecurrenceInArgs = false;
@@ -663,10 +696,12 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (typeof args === 'object' && args !== null && 'id' in args) {
         id = args.id;
         text = args.text;
+        priority = args.priority;
         tag = args.tag;
         recurrence = args.recurrence;
         subtasks = args.subtasks;
         notes = args.notes;
+        hasPriorityInArgs = 'priority' in args;
         hasSubtasksInArgs = 'subtasks' in args;
         hasNotesInArgs = 'notes' in args;
         hasRecurrenceInArgs = 'recurrence' in args;
@@ -688,6 +723,9 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
             modifiedItem = {
               ...item,
               text: trimmed,
+              priority: hasPriorityInArgs
+                ? (priority && priority !== 'none' ? priority : undefined)
+                : item.priority,
               tag: hasTagInArgs ? tag : item.tag,
               recurrence: hasRecurrenceInArgs ? recurrence : item.recurrence,
               subtasks: hasSubtasksInArgs ? subtasks : item.subtasks,
@@ -1063,16 +1101,24 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
         filtered = filtered.filter((item) => item.completed);
       }
 
-      // Sorting: Pinned first, then pending first, then newest
+      // Priority filter
+      if (priorityFilter && priorityFilter !== 'all') {
+        filtered = filtered.filter((item) => item.priority === priorityFilter);
+      }
+
+      // Sorting: Pinned first, then manual order (if set), then pending first, then newest
       return filtered.sort((a, b) => {
         if (a.pinned && !b.pinned) return -1;
         if (!a.pinned && b.pinned) return 1;
+        if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
+        if (a.order !== undefined) return -1;
+        if (b.order !== undefined) return 1;
         if (!a.completed && b.completed) return -1;
         if (a.completed && !b.completed) return 1;
         return b.createdAt - a.createdAt;
       });
     },
-    [todos, selectedDate, searchQuery, statusFilter]
+    [todos, selectedDate, searchQuery, statusFilter, priorityFilter]
   );
 
   const streak = useMemo(() => calculateCompletionStreak(todos), [todos]);
@@ -1101,6 +1147,8 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSearchQuery,
       statusFilter,
       setStatusFilter,
+      priorityFilter,
+      setPriorityFilter,
       streak,
       getSectionTodos,
       getPastPendingTasks,
@@ -1108,6 +1156,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addTodo,
       addBatchTodos,
       applyRoutine,
+      reorderTodos,
       toggleTodo,
       toggleSubtask,
       togglePinTodo,
@@ -1143,6 +1192,8 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSearchQuery,
       statusFilter,
       setStatusFilter,
+      priorityFilter,
+      setPriorityFilter,
       streak,
       getSectionTodos,
       getPastPendingTasks,
@@ -1150,6 +1201,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addTodo,
       addBatchTodos,
       applyRoutine,
+      reorderTodos,
       toggleTodo,
       toggleSubtask,
       togglePinTodo,

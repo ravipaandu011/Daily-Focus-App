@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { SectionConfig } from '@/constants/sections';
-import { RecurrenceType, SubtaskItem } from '@/types/todo';
+import { RecurrenceType, SubtaskItem, PriorityLevel } from '@/types/todo';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import {
@@ -33,6 +33,7 @@ interface AddTaskModalProps {
   onAdd: (params: {
     text: string;
     date: string;
+    priority?: PriorityLevel;
     tag?: string;
     recurrence?: RecurrenceType;
     subtasks?: SubtaskItem[];
@@ -40,6 +41,13 @@ interface AddTaskModalProps {
   }) => void;
   onAddBatch?: (texts: string[], date: string, tag?: string) => void;
 }
+
+export const PRIORITY_OPTIONS: { key: PriorityLevel; label: string; color: string }[] = [
+  { key: 'none', label: 'None', color: '#64748B' },
+  { key: 'low', label: '🔵 Low', color: '#3B82F6' },
+  { key: 'medium', label: '🟡 Med', color: '#F59E0B' },
+  { key: 'high', label: '🔴 High', color: '#EF4444' },
+];
 
 export const RECURRENCE_OPTIONS: { key: RecurrenceType; label: string }[] = [
   { key: 'none', label: 'None' },
@@ -59,6 +67,7 @@ export const AddTaskModal: React.FC<AddTaskModalProps> = ({
 }) => {
   const [text, setText] = useState('');
   const [targetDate, setTargetDate] = useState(initialDate || getTodayKey());
+  const [selectedPriority, setSelectedPriority] = useState<PriorityLevel>('none');
   const [selectedRecurrence, setSelectedRecurrence] = useState<RecurrenceType>('none');
   const [notes, setNotes] = useState('');
   const [subtasks, setSubtasks] = useState<SubtaskItem[]>([]);
@@ -77,6 +86,7 @@ export const AddTaskModal: React.FC<AddTaskModalProps> = ({
   useEffect(() => {
     if (visible) {
       setText('');
+      setSelectedPriority('none');
       setSelectedRecurrence('none');
       setNotes('');
       setSubtasks([]);
@@ -148,6 +158,7 @@ export const AddTaskModal: React.FC<AddTaskModalProps> = ({
       onAdd({
         text: lines[0] || trimmed,
         date: targetDate,
+        priority: selectedPriority !== 'none' ? selectedPriority : undefined,
         recurrence: selectedRecurrence !== 'none' ? selectedRecurrence : undefined,
         subtasks: finalSubtasks.length > 0 ? finalSubtasks : undefined,
         notes: notes.trim() || undefined,
@@ -155,6 +166,7 @@ export const AddTaskModal: React.FC<AddTaskModalProps> = ({
     }
 
     setText('');
+    setSelectedPriority('none');
     setSubtaskInput('');
     setSubtasks([]);
     onClose();
@@ -171,7 +183,7 @@ export const AddTaskModal: React.FC<AddTaskModalProps> = ({
     );
     const hideSub = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => {
+      (e) => {
         setKeyboardHeight(0);
       }
     );
@@ -325,6 +337,53 @@ export const AddTaskModal: React.FC<AddTaskModalProps> = ({
                                 </Text>
                               </View>
                             )}
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+
+                  {/* Priority Selector */}
+                  <View style={styles.dateSelectorContainer}>
+                    <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>
+                      Priority:
+                    </Text>
+                    <View style={styles.dateChipsRow}>
+                      {PRIORITY_OPTIONS.map((p) => {
+                        const isSel = selectedPriority === p.key;
+                        return (
+                          <TouchableOpacity
+                            key={p.key}
+                            activeOpacity={0.75}
+                            onPress={() => setSelectedPriority(p.key)}
+                            style={styles.dateChipTouchable}>
+                            <View
+                              style={[
+                                styles.dateChipInactive,
+                                {
+                                  backgroundColor: isSel
+                                    ? p.key === 'high'
+                                      ? '#EF4444'
+                                      : p.key === 'medium'
+                                      ? '#F59E0B'
+                                      : p.key === 'low'
+                                      ? '#3B82F6'
+                                      : colorScheme === 'dark' ? '#475569' : '#334155'
+                                    : theme.inputBg,
+                                  borderColor: isSel ? p.color : theme.cardBorder,
+                                },
+                              ]}>
+                              <Text
+                                style={[
+                                  styles.dateChipTextInactive,
+                                  {
+                                    color: isSel ? '#FFFFFF' : theme.textSecondary,
+                                    fontWeight: isSel ? '800' : '600',
+                                  },
+                                ]}>
+                                {p.label}
+                              </Text>
+                            </View>
                           </TouchableOpacity>
                         );
                       })}
