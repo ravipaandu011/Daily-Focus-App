@@ -14,6 +14,8 @@ interface CategoryContextType {
   updateCategory: (key: string, updates: Partial<Omit<CustomCategory, 'id' | 'key' | 'createdAt'>>) => Promise<CustomCategory | null>;
   deleteCategory: (key: string) => Promise<void>;
   isCustomCategory: (key: string) => boolean;
+  openAddModalRequest: number;
+  triggerOpenAddModal: () => void;
 }
 
 const CategoryContext = createContext<CategoryContextType | undefined>(undefined);
@@ -22,6 +24,11 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const { user } = useAuth();
   const [customCategories, setCustomCategories] = useState<CustomCategory[]>([]);
   const [activeCategoryKey, setActiveCategoryKey] = useState<string>('work');
+  const [openAddModalRequest, setOpenAddModalRequest] = useState<number>(0);
+
+  const triggerOpenAddModal = useCallback(() => {
+    setOpenAddModalRequest((prev) => prev + 1);
+  }, []);
 
   const storageKey = useMemo(() => {
     return user ? `@personal_todo_custom_categories_u_${user.id}` : '@personal_todo_custom_categories_local';
@@ -152,6 +159,8 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updateCategory,
         deleteCategory,
         isCustomCategory,
+        openAddModalRequest,
+        triggerOpenAddModal,
       }}>
       {children}
     </CategoryContext.Provider>

@@ -102,9 +102,16 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
   } = useTodos();
 
   const { isAuthModalVisible, closeAuthModal, promptAuthModal } = useAuth();
+  const { openAddModalRequest } = useCategories();
 
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+
+  React.useEffect(() => {
+    if (openAddModalRequest > 0) {
+      setAddModalVisible(true);
+    }
+  }, [openAddModalRequest]);
   const [binModalVisible, setBinModalVisible] = useState(false);
   const [streakModalVisible, setStreakModalVisible] = useState(false);
   const [analyticsModalVisible, setAnalyticsModalVisible] = useState(false);
@@ -375,22 +382,6 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
           }
         />
       )}
-
-      {/* Floating Add Button with LinearGradient & Material Rounded Squircle */}
-      <TouchableOpacity
-        accessibilityRole="button"
-        accessibilityLabel={`Add new task to ${sectionConfig.tabLabel}`}
-        activeOpacity={0.88}
-        onPress={handleOpenAddModal}
-        style={[styles.fabTouchable, { shadowColor: sectionConfig.color }]}>
-        <LinearGradient
-          colors={sectionConfig.gradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.fabGradient}>
-          <Ionicons name="add" size={32} color="#FFFFFF" />
-        </LinearGradient>
-      </TouchableOpacity>
 
       {/* Undo Toast Snackbar */}
       <UndoToast
