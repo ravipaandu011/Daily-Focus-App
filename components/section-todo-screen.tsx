@@ -101,6 +101,7 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
     emptyBin,
     importBackupData,
     isUndoVisible,
+    undoMessage,
     dismissUndo,
   } = useTodos();
 
@@ -392,7 +393,7 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
       {/* Undo Toast Snackbar */}
       <UndoToast
         visible={isUndoVisible}
-        message="Moved to bin"
+        message={undoMessage}
         onUndo={undoDelete}
         onDismiss={dismissUndo}
       />

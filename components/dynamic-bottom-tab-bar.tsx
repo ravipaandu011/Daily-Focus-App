@@ -195,23 +195,25 @@ const DynamicBottomTabBarComponent: React.FC = () => {
               );
             })}
 
-            {/* Clean Rounded Add Category Button */}
+            {/* Seamless Minimal + New Category Tab */}
             <TouchableOpacity
               activeOpacity={0.75}
               onPress={handleOpenAddModal}
               style={styles.tabItem}>
-              <View
-                style={[
-                  styles.addIconWrapper,
-                  {
-                    backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : 'rgba(59, 130, 246, 0.1)',
-                    borderColor: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)',
-                  },
-                ]}>
-                <Ionicons name="folder-open-outline" size={17} color="#3B82F6" />
+              <View style={styles.inactiveIconWrapper}>
+                <Ionicons
+                  name="add"
+                  size={20}
+                  color={isDark ? '#64748B' : '#94A3B8'}
+                />
               </View>
-              <Text style={[styles.tabLabel, { color: '#3B82F6', fontWeight: '600' }]}>
-                + List
+              <Text
+                style={[
+                  styles.tabLabel,
+                  { color: isDark ? '#64748B' : '#94A3B8' },
+                ]}
+                numberOfLines={1}>
+                New
               </Text>
             </TouchableOpacity>
           </ScrollView>
@@ -406,17 +408,18 @@ const styles = StyleSheet.create({
   container: {
     marginHorizontal: 16,
     width: '92%',
-    borderRadius: 26,
+    borderRadius: 36,
     borderWidth: 1.2,
     paddingTop: 8,
     paddingBottom: 8,
+    paddingHorizontal: 4,
     elevation: 8,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
   },
   scrollContent: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
@@ -451,14 +454,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1.2,
     borderColor: 'transparent',
-  },
-  addIconWrapper: {
-    width: 44,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1.2,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   tabEmoji: {
     fontSize: 16,

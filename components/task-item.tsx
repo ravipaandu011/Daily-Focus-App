@@ -33,12 +33,11 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
   onSelectTask,
   onToggle,
   onToggleSubtask,
-  onMoveUp,
-  onMoveDown,
 }) => {
   const hasSubtasks = Boolean(item.subtasks && item.subtasks.length > 0);
   const [expandedSubtasks, setExpandedSubtasks] = useState<boolean>(hasSubtasks);
   const colorScheme = useColorScheme() ?? 'light';
+  const isDark = colorScheme === 'dark';
   const theme = Colors[colorScheme];
 
   const handleToggleComplete = () => {
@@ -72,40 +71,11 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
 
   const isChecked = Boolean(item.completed);
 
-  return (
-    <TouchableOpacity
-      activeOpacity={0.85}
-      onPress={handleCardPress}
-      style={[
-        styles.container,
-        {
-          backgroundColor:
-            colorScheme === 'dark' ? 'rgba(30, 41, 59, 0.85)' : '#FFFFFF',
-          borderColor: isSelected
-            ? sectionConfig.color
-            : item.pinned
-            ? '#F59E0B'
-            : item.completed
-            ? theme.cardBorder
-            : colorScheme === 'dark'
-            ? 'rgba(51, 65, 85, 0.65)'
-            : 'rgba(226, 232, 240, 0.9)',
-          borderWidth: isSelected ? 1.8 : 1,
-          shadowColor: isSelected ? sectionConfig.color : '#000000',
-          shadowOpacity: isSelected
-            ? colorScheme === 'dark'
-              ? 0.35
-              : 0.12
-            : colorScheme === 'dark'
-            ? 0.2
-            : 0.04,
-          shadowRadius: isSelected ? 8 : 6,
-        },
-        item.completed && styles.completedContainer,
-      ]}>
+  const renderCardContent = () => (
+    <>
       {/* Main Row: Rounded Checkbox, Text, Badges */}
       <View style={styles.mainRow}>
-        {/* Checkbox: Radiant Gradient Checkmark (Style 2) */}
+        {/* Checkbox */}
         <TouchableOpacity
           accessibilityRole="checkbox"
           accessibilityState={{ checked: isChecked }}
@@ -128,7 +98,7 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
                 {
                   borderColor: isSelected
                     ? sectionConfig.color
-                    : colorScheme === 'dark'
+                    : isDark
                     ? '#64748B'
                     : '#CBD5E1',
                   backgroundColor: 'transparent',
@@ -156,14 +126,14 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
                     {
                       backgroundColor:
                         item.priority === 'high'
-                          ? colorScheme === 'dark'
+                          ? isDark
                             ? 'rgba(239, 68, 68, 0.2)'
                             : '#FEF2F2'
                           : item.priority === 'medium'
-                          ? colorScheme === 'dark'
+                          ? isDark
                             ? 'rgba(245, 158, 11, 0.2)'
                             : '#FFFBEB'
-                          : colorScheme === 'dark'
+                          : isDark
                           ? 'rgba(59, 130, 246, 0.2)'
                           : '#EFF6FF',
                       borderColor:
@@ -196,7 +166,7 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
                   style={[
                     styles.tagBadge,
                     {
-                      backgroundColor: colorScheme === 'dark' ? '#3B200A' : '#FFF7ED',
+                      backgroundColor: isDark ? '#3B200A' : '#FFF7ED',
                       borderColor: '#F97316',
                     },
                   ]}>
@@ -214,7 +184,7 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
                     {
                       backgroundColor:
                         subtasksDone === subtasksTotal
-                          ? colorScheme === 'dark'
+                          ? isDark
                             ? '#064E3B'
                             : '#ECFDF5'
                           : theme.inputBg,
@@ -251,28 +221,6 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
             {item.text}
           </Text>
         </View>
-
-        {/* Reorder Chevrons when selected */}
-        {isSelected && (onMoveUp || onMoveDown) && (
-          <View style={styles.reorderColumn}>
-            {onMoveUp && (
-              <TouchableOpacity
-                onPress={() => onMoveUp(item.id)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                style={[styles.reorderBtn, { backgroundColor: theme.inputBg }]}>
-                <Ionicons name="chevron-up" size={13} color={sectionConfig.color} />
-              </TouchableOpacity>
-            )}
-            {onMoveDown && (
-              <TouchableOpacity
-                onPress={() => onMoveDown(item.id)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                style={[styles.reorderBtn, { backgroundColor: theme.inputBg }]}>
-                <Ionicons name="chevron-down" size={13} color={sectionConfig.color} />
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
       </View>
 
       {/* Expandable Subtasks Checklist */}
@@ -319,20 +267,90 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
           )}
         </View>
       )}
+    </>
+  );
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={handleCardPress}
+      style={[
+        styles.wrapper,
+        item.completed && styles.completedContainer,
+      ]}>
+      {isSelected ? (
+        <LinearGradient
+          colors={sectionConfig.gradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[
+            styles.gradientBorder,
+            {
+              shadowColor: sectionConfig.color,
+              shadowOpacity: isDark ? 0.35 : 0.15,
+            },
+          ]}>
+          <View
+            style={[
+              styles.innerCard,
+              {
+                backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+              },
+            ]}>
+            {renderCardContent()}
+          </View>
+        </LinearGradient>
+      ) : (
+        <View
+          style={[
+            styles.defaultCard,
+            {
+              backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+              borderColor: item.pinned
+                ? '#F59E0B'
+                : item.completed
+                ? theme.cardBorder
+                : isDark
+                ? 'rgba(51, 65, 85, 0.65)'
+                : 'rgba(226, 232, 240, 0.9)',
+            },
+          ]}>
+          {renderCardContent()}
+        </View>
+      )}
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    paddingVertical: 13,
-    paddingHorizontal: 16,
+  wrapper: {
     marginHorizontal: 16,
     marginBottom: 9,
     borderRadius: 21,
+  },
+  defaultCard: {
+    borderRadius: 21,
+    borderWidth: 1.5,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 8,
+    shadowOpacity: 0.04,
+    elevation: 2,
+    gap: 8,
+  },
+  gradientBorder: {
+    borderRadius: 21,
+    padding: 1.5,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 10,
-    elevation: 2,
+    elevation: 4,
+  },
+  innerCard: {
+    borderRadius: 19.5,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
     gap: 8,
   },
   mainRow: {
@@ -475,26 +493,13 @@ const styles = StyleSheet.create({
     color: '#3B82F6',
     fontWeight: '700',
   },
-  reorderColumn: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 3,
-    marginLeft: 6,
-  },
-  reorderBtn: {
-    width: 24,
-    height: 20,
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 });
 
 export const TaskItem = React.memo(TaskItemComponent, (prevProps, nextProps) => {
   return (
     prevProps.isSelected === nextProps.isSelected &&
     prevProps.sectionConfig.color === nextProps.sectionConfig.color &&
+    JSON.stringify(prevProps.sectionConfig.gradient) === JSON.stringify(nextProps.sectionConfig.gradient) &&
     prevProps.item.id === nextProps.item.id &&
     prevProps.item.text === nextProps.item.text &&
     prevProps.item.completed === nextProps.item.completed &&
@@ -508,4 +513,3 @@ export const TaskItem = React.memo(TaskItemComponent, (prevProps, nextProps) => 
     JSON.stringify(prevProps.item.subtasks) === JSON.stringify(nextProps.item.subtasks)
   );
 });
-

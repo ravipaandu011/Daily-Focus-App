@@ -74,6 +74,7 @@ interface TodoContextType {
   emptyBin: () => Promise<void>;
   importBackupData: (newTodos: TodoItem[], newBin: TodoItem[]) => Promise<void>;
   lastDeletedTodo: TodoItem | null;
+  undoMessage: string;
   isUndoVisible: boolean;
   dismissUndo: () => void;
   reloadTodos: () => Promise<void>;
@@ -141,6 +142,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [priorityFilter, setPriorityFilter] = useState<PriorityLevel | 'all'>('all');
   const [lastDeletedTodo, setLastDeletedTodo] = useState<TodoItem | null>(null);
+  const [lastDeletedTodos, setLastDeletedTodos] = useState<TodoItem[]>([]);
   const [isUndoVisible, setIsUndoVisible] = useState<boolean>(false);
 
   const isRealtimeEventRef = useRef(false);
@@ -758,6 +760,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
             deletedAt: Date.now(),
           };
           setLastDeletedTodo(deletedItem);
+          setLastDeletedTodos([deletedItem]);
           setIsUndoVisible(true);
 
           setBinTodos((prevBin) => {
@@ -792,6 +795,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }));
 
           setLastDeletedTodo(deletedItems[0] || null);
+          setLastDeletedTodos(deletedItems);
           setIsUndoVisible(true);
 
           setBinTodos((prevBin) => {
@@ -1032,13 +1036,36 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [user, pushBatchToCloud]
   );
 
+  const undoMessage = useMemo(() => {
+    if (lastDeletedTodos.length > 1) {
+      return `${lastDeletedTodos.length} tasks moved to bin`;
+    }
+    if (lastDeletedTodo?.text) {
+      const title = lastDeletedTodo.text.trim();
+      return title.length > 20
+        ? `"${title.substring(0, 20)}..." moved to bin`
+        : `"${title}" moved to bin`;
+    }
+    return 'Moved to bin';
+  }, [lastDeletedTodos, lastDeletedTodo]);
+
   const undoDelete = useCallback(async () => {
-    if (!lastDeletedTodo) return;
-    await restoreFromBin(lastDeletedTodo.id);
-  }, [lastDeletedTodo, restoreFromBin]);
+    if (lastDeletedTodos.length > 1) {
+      await restoreBatchFromBin(lastDeletedTodos.map((t) => t.id));
+    } else if (lastDeletedTodos.length === 1) {
+      await restoreFromBin(lastDeletedTodos[0].id);
+    } else if (lastDeletedTodo) {
+      await restoreFromBin(lastDeletedTodo.id);
+    }
+    setIsUndoVisible(false);
+    setLastDeletedTodo(null);
+    setLastDeletedTodos([]);
+  }, [lastDeletedTodos, lastDeletedTodo, restoreBatchFromBin, restoreFromBin]);
 
   const dismissUndo = useCallback(() => {
     setIsUndoVisible(false);
+    setLastDeletedTodo(null);
+    setLastDeletedTodos([]);
   }, []);
 
   const getPastPendingTasks = useCallback(
@@ -1177,6 +1204,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       emptyBin,
       importBackupData,
       lastDeletedTodo,
+      undoMessage,
       isUndoVisible,
       dismissUndo,
       reloadTodos,
@@ -1222,6 +1250,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       emptyBin,
       importBackupData,
       lastDeletedTodo,
+      undoMessage,
       isUndoVisible,
       dismissUndo,
       reloadTodos,
