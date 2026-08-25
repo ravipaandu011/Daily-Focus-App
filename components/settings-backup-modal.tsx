@@ -193,7 +193,7 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
     try {
       await Share.share({
         message: backupJson,
-        title: "Personal Todo Backup JSON",
+        title: "Daily Focus Backup JSON",
       });
     } catch (e) {
       console.error("Failed to share backup", e);

@@ -36,7 +36,7 @@ export function generateStandupText(todos: TodoItem[], dateKey: string): string 
 
   text += `━━━━━━━━━━━━━━━━━━━━\n`;
   text += `🔥 Streak: ${streak} days | Completion: ${rate}%\n`;
-  text += `Generated with Personal Todo App`;
+  text += `Generated with Daily Focus App`;
 
   return text;
 }

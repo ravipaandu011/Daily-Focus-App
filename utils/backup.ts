@@ -12,7 +12,7 @@ export function generateBackupJson(todos: TodoItem[], binTodos: TodoItem[]): str
   const data: BackupData = {
     version: 1,
     exportedAt: new Date().toISOString(),
-    app: 'Personal Todo App',
+    app: 'Daily Focus App',
     todos,
     binTodos,
   };

@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "Personal Todo",
-    "slug": "Personal-To-DO-App",
+    "name": "Daily Focus",
+    "slug": "Daily-Focus",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "personaltodoapp",
+    "scheme": "dailyfocus",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
     "android": {
-      "package": "com.personaltodo.app",
+      "package": "com.dailyfocus.app",
       "adaptiveIcon": {
         "backgroundColor": "#0F172A",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
