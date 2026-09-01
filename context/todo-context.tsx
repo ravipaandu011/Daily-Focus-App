@@ -441,8 +441,13 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const reorderTodos = useCallback(
     async (reorderedList: TodoItem[]) => {
+      const idToOrder = new Map(reorderedList.map((item, index) => [item.id, index]));
+      const updatedListWithOrders = reorderedList.map((item, index) => ({
+        ...item,
+        order: index,
+      }));
+
       setTodos((prev) => {
-        const idToOrder = new Map(reorderedList.map((item, index) => [item.id, index]));
         const updated = prev.map((item) => {
           if (idToOrder.has(item.id)) {
             return { ...item, order: idToOrder.get(item.id) };
@@ -452,7 +457,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
         saveTodosToStorage(updated, user?.id ?? null);
         return updated;
       });
-      pushBatchToCloud(reorderedList);
+      pushBatchToCloud(updatedListWithOrders);
     },
     [user, pushBatchToCloud]
   );
@@ -1292,4 +1297,5 @@ export function useTodos() {
   }
   return context;
 }
+
 

@@ -58,36 +58,42 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
   const theme = Colors[colorScheme];
 
   // Drag animation scale
+  // Drag animation scale
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const lastMovedRef = useRef<number>(0);
+  const accumulatedDyRef = useRef<number>(0);
 
-  // PanResponder for drag handle
+  // PanResponder for direct touch & slide drag
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 2,
+      onMoveShouldSetPanResponderCapture: (_, gestureState) => Math.abs(gestureState.dy) > 2,
+      onPanResponderTerminationRequest: () => false,
       onPanResponderGrant: () => {
         setIsDragging(true);
-        lastMovedRef.current = 0;
+        accumulatedDyRef.current = 0;
         if (Platform.OS !== 'web') {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         }
         Animated.spring(scaleAnim, {
-          toValue: 1.03,
+          toValue: 1.04,
+          friction: 5,
           useNativeDriver: true,
         }).start();
       },
       onPanResponderMove: (_, gestureState) => {
-        const threshold = 36;
-        const currentDy = gestureState.dy - lastMovedRef.current;
-        if (currentDy < -threshold && onMoveUp && !isFirst) {
-          lastMovedRef.current = gestureState.dy;
+        const stepThreshold = 34;
+        const currentDy = gestureState.dy - accumulatedDyRef.current;
+
+        if (currentDy < -stepThreshold && onMoveUp && !isFirst) {
+          accumulatedDyRef.current = gestureState.dy;
           if (Platform.OS !== 'web') {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           }
           onMoveUp(item.id);
-        } else if (currentDy > threshold && onMoveDown && !isLast) {
-          lastMovedRef.current = gestureState.dy;
+        } else if (currentDy > stepThreshold && onMoveDown && !isLast) {
+          accumulatedDyRef.current = gestureState.dy;
           if (Platform.OS !== 'web') {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           }
@@ -96,9 +102,9 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
       },
       onPanResponderRelease: () => {
         setIsDragging(false);
-        lastMovedRef.current = 0;
+        accumulatedDyRef.current = 0;
         if (Platform.OS !== 'web') {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
         Animated.spring(scaleAnim, {
           toValue: 1,
@@ -108,7 +114,7 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
       },
       onPanResponderTerminate: () => {
         setIsDragging(false);
-        lastMovedRef.current = 0;
+        accumulatedDyRef.current = 0;
         Animated.spring(scaleAnim, {
           toValue: 1,
           friction: 6,
@@ -117,7 +123,6 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
       },
     })
   ).current;
-
   const handleToggleComplete = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -375,55 +380,30 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
               )}
             </View>
           </View>
-
-          {/* Reorder / Drag Controls (Active when Reorder Mode is enabled) */}
+          {/* Drag Handle (Active when Reorder Mode is enabled) */}
           {isReorderMode && !isSelectionMode && (
-            <View style={styles.reorderControls}>
-              {/* Quick Shift Up / Down Buttons */}
-              <View style={styles.reorderButtonsCol}>
-                <TouchableOpacity
-                  disabled={isFirst}
-                  activeOpacity={0.6}
-                  onPress={() => onMoveUp?.(item.id)}
-                  style={[styles.shiftBtn, isFirst && styles.shiftBtnDisabled]}>
-                  <Ionicons
-                    name="chevron-up"
-                    size={13}
-                    color={isFirst ? (isDark ? '#475569' : '#CBD5E1') : (isDark ? '#94A3B8' : '#64748B')}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  disabled={isLast}
-                  activeOpacity={0.6}
-                  onPress={() => onMoveDown?.(item.id)}
-                  style={[styles.shiftBtn, isLast && styles.shiftBtnDisabled]}>
-                  <Ionicons
-                    name="chevron-down"
-                    size={13}
-                    color={isLast ? (isDark ? '#475569' : '#CBD5E1') : (isDark ? '#94A3B8' : '#64748B')}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              {/* Interactive Drag Handle */}
-              <View {...panResponder.panHandlers} style={styles.dragHandleTouch}>
-                <View
-                  style={[
-                    styles.dragHandlePill,
-                    {
-                      backgroundColor: isDragging
-                        ? sectionConfig.color
-                        : isDark
-                        ? '#1E293B'
-                        : 'rgba(241, 245, 249, 0.95)',
-                    },
-                  ]}>
-                  <Ionicons
-                    name="reorder-two"
-                    size={18}
-                    color={isDragging ? '#FFFFFF' : (isDark ? '#94A3B8' : '#64748B')}
-                  />
-                </View>
+            <View {...panResponder.panHandlers} style={styles.dragHandleTouch}>
+              <View
+                style={[
+                  styles.dragHandlePill,
+                  {
+                    backgroundColor: isDragging
+                      ? sectionConfig.color
+                      : isDark
+                      ? '#1E293B'
+                      : '#F1F5F9',
+                    borderColor: isDragging
+                      ? sectionConfig.color
+                      : isDark
+                      ? 'rgba(51, 65, 85, 0.7)'
+                      : '#CBD5E1',
+                  },
+                ]}>
+                <Ionicons
+                  name="reorder-three"
+                  size={22}
+                  color={isDragging ? '#FFFFFF' : (isDark ? '#94A3B8' : '#64748B')}
+                />
               </View>
             </View>
           )}
@@ -815,6 +795,7 @@ export const TaskItem = React.memo(TaskItemComponent, (prevProps, nextProps) => 
     JSON.stringify(prevProps.item.subtasks) === JSON.stringify(nextProps.item.subtasks)
   );
 });
+
 
 
 
