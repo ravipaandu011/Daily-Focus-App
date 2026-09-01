@@ -57,69 +57,55 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
   const isDark = colorScheme === 'dark';
   const theme = Colors[colorScheme];
 
-  // Drag animation scale
-  // Drag animation scale
+  // Scale animation for drag lift effect
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const accumulatedDyRef = useRef<number>(0);
 
-  // PanResponder for direct touch & slide drag
-  const panResponder = useRef(
+  // gestureState.dy is CUMULATIVE from gesture start (not per-frame delta).
+  // We track lastDyRef to compute per-frame delta accurately.
+  const bucketRef = useRef<number>(0);  // fractional px accumulator
+  const lastDyRef = useRef<number>(0);  // previous frame cumulative dy
+  const SLOT_HEIGHT = 56;               // approximate card height in px
+
+  // dragHandleResponder is ONLY attached to the visible drag handle icon.
+  // Normal card taps will never trigger drag logic.
+  const dragHandleResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onStartShouldSetPanResponderCapture: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 2,
-      onMoveShouldSetPanResponderCapture: (_, gestureState) => Math.abs(gestureState.dy) > 2,
+      onMoveShouldSetPanResponder: () => true,
       onPanResponderTerminationRequest: () => false,
       onPanResponderGrant: () => {
         setIsDragging(true);
-        accumulatedDyRef.current = 0;
-        if (Platform.OS !== 'web') {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        }
-        Animated.spring(scaleAnim, {
-          toValue: 1.04,
-          friction: 5,
-          useNativeDriver: true,
-        }).start();
+        bucketRef.current = 0;
+        lastDyRef.current = 0;
+        if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        Animated.spring(scaleAnim, { toValue: 1.03, friction: 6, useNativeDriver: true }).start();
       },
       onPanResponderMove: (_, gestureState) => {
-        const stepThreshold = 34;
-        const currentDy = gestureState.dy - accumulatedDyRef.current;
+        const delta = gestureState.dy - lastDyRef.current;
+        lastDyRef.current = gestureState.dy;
+        bucketRef.current += delta;
 
-        if (currentDy < -stepThreshold && onMoveUp && !isFirst) {
-          accumulatedDyRef.current = gestureState.dy;
-          if (Platform.OS !== 'web') {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          }
-          onMoveUp(item.id);
-        } else if (currentDy > stepThreshold && onMoveDown && !isLast) {
-          accumulatedDyRef.current = gestureState.dy;
-          if (Platform.OS !== 'web') {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          }
-          onMoveDown(item.id);
+        if (bucketRef.current <= -SLOT_HEIGHT) {
+          bucketRef.current += SLOT_HEIGHT;
+          if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onMoveUp?.(item.id);
+        } else if (bucketRef.current >= SLOT_HEIGHT) {
+          bucketRef.current -= SLOT_HEIGHT;
+          if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onMoveDown?.(item.id);
         }
       },
       onPanResponderRelease: () => {
         setIsDragging(false);
-        accumulatedDyRef.current = 0;
-        if (Platform.OS !== 'web') {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          friction: 6,
-          useNativeDriver: true,
-        }).start();
+        bucketRef.current = 0;
+        lastDyRef.current = 0;
+        Animated.spring(scaleAnim, { toValue: 1, friction: 7, useNativeDriver: true }).start();
       },
       onPanResponderTerminate: () => {
         setIsDragging(false);
-        accumulatedDyRef.current = 0;
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          friction: 6,
-          useNativeDriver: true,
-        }).start();
+        bucketRef.current = 0;
+        lastDyRef.current = 0;
+        Animated.spring(scaleAnim, { toValue: 1, friction: 7, useNativeDriver: true }).start();
       },
     })
   ).current;
@@ -171,7 +157,7 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
 
   return (
     <Animated.View
-      {...(isReorderMode ? panResponder.panHandlers : {})}
+
       style={[
         { transform: [{ scale: scaleAnim }] },
         isReorderMode && { zIndex: isDragging ? 999 : 1 },
@@ -418,6 +404,20 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
               )}
             </View>
           </View>
+
+          {/* Drag Handle - attached ONLY here, not on whole card */}
+          {isReorderMode && (
+            <View
+              {...dragHandleResponder.panHandlers}
+              hitSlop={{ top: 14, bottom: 14, left: 10, right: 10 }}
+              style={styles.dragHandleArea}>
+              <Ionicons
+                name="reorder-three-outline"
+                size={24}
+                color={isDragging ? sectionConfig.color : (isDark ? '#64748B' : '#94A3B8')}
+              />
+            </View>
+          )}
         </View>
 
         {/* Micro-Tree Subtask Checklist */}
@@ -647,6 +647,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#3B82F6',
   },
+  dragHandleArea: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    marginLeft: 4,
+  },
   reorderControls: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -806,6 +813,13 @@ export const TaskItem = React.memo(TaskItemComponent, (prevProps, nextProps) => 
     JSON.stringify(prevProps.item.subtasks) === JSON.stringify(nextProps.item.subtasks)
   );
 });
+
+
+
+
+
+
+
 
 
 
