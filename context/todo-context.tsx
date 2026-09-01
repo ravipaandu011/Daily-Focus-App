@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
+﻿import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { SectionKey, TodoItem, StatusFilter, RoutineTemplate, SubtaskItem, RecurrenceType, PriorityLevel } from '@/types/todo';
 import {
   loadTodosFromStorage,
@@ -82,23 +82,23 @@ interface TodoContextType {
 
 const TodoContext = createContext<TodoContextType | undefined>(undefined);
 
-// Helper to convert TodoItem to Supabase DB Row
+// Helper to convert TodoItem to Supabase DB Row (safe ISO timestamp for PostgreSQL timestamptz)
 function todoToDbRow(item: TodoItem, userId: string) {
   return {
-    id: item.id,
+    id: String(item.id),
     user_id: userId,
     text: item.text,
-    completed: item.completed,
+    completed: Boolean(item.completed),
     section: item.section,
     date: item.date,
-    pinned: item.pinned ?? false,
+    pinned: Boolean(item.pinned),
     priority: item.priority ?? 'none',
     tag: item.tag ?? null,
     recurrence: item.recurrence ?? null,
     subtasks: item.subtasks ? JSON.stringify(item.subtasks) : '[]',
     notes: item.notes ?? null,
     order: item.order ?? null,
-    created_at: item.createdAt,
+    created_at: typeof item.createdAt === 'number' ? new Date(item.createdAt).toISOString() : item.createdAt,
   };
 }
 
@@ -113,11 +113,19 @@ function dbRowToTodo(row: any): TodoItem {
     }
   }
 
+  let parsedCreatedAt = Date.now();
+  if (typeof row.created_at === 'number') {
+    parsedCreatedAt = row.created_at;
+  } else if (typeof row.created_at === 'string') {
+    const timeVal = new Date(row.created_at).getTime();
+    if (!isNaN(timeVal)) parsedCreatedAt = timeVal;
+  }
+
   return {
-    id: row.id,
+    id: String(row.id),
     text: row.text,
     completed: Boolean(row.completed),
-    createdAt: Number(row.created_at) || Date.now(),
+    createdAt: parsedCreatedAt,
     section: row.section,
     date: row.date,
     pinned: Boolean(row.pinned),
@@ -215,8 +223,25 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const mappedTodos = remoteTodos
               .map(dbRowToTodo)
               .filter((t) => !deletedIdsRef.current.has(t.id));
-            setTodos(mappedTodos);
-            await saveTodosToStorage(mappedTodos, user.id);
+
+            // If remote has tasks, use remote as truth
+            if (mappedTodos.length > 0) {
+              setTodos(mappedTodos);
+              await saveTodosToStorage(mappedTodos, user.id);
+            } else if (cachedUserTodos.length > 0) {
+              // If remote is empty but local user cache has tasks, upload local tasks to Supabase
+              pushBatchToCloud(cachedUserTodos);
+            } else {
+              // Check if guest had tasks on this device and migrate them
+              const guestTodos = await loadTodosFromStorage(null);
+              if (guestTodos.length > 0 && guestTodos.some(t => !t.id.startsWith('demo_'))) {
+                setTodos(guestTodos);
+                await saveTodosToStorage(guestTodos, user.id);
+                pushBatchToCloud(guestTodos);
+              }
+            }
+          } else if (error) {
+            console.warn('Supabase todos query error (table might need creation):', error.message);
           }
         } catch (e) {
           console.error('Error syncing user todos with Supabase', e);
@@ -1267,3 +1292,4 @@ export function useTodos() {
   }
   return context;
 }
+

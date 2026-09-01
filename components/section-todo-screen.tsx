@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,6 @@ import { useAppTheme } from '@/context/theme-context';
 import { useTodos } from '@/hooks/use-todos';
 import { TaskList } from '@/components/task-list';
 import { DateNavigator } from '@/components/date-navigator';
-import { TaskFilterBar } from '@/components/task-filter-bar';
 import { RolloverBanner } from '@/components/rollover-banner';
 import { UndoToast } from '@/components/undo-toast';
 import { AddTaskModal } from '@/components/add-task-modal';
@@ -54,6 +53,7 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
 
   const sectionConfig = getCategoryConfig(activeSection);
   const colorScheme = useColorScheme() ?? 'light';
+  const isDark = colorScheme === 'dark';
   const theme = Colors[colorScheme];
   const { toggleTheme } = useAppTheme();
   const insets = useSafeAreaInsets();
@@ -62,6 +62,7 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
     insets.top,
     Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) : 0
   );
+  const bottomInset = Math.max(insets.bottom, 14) + 64;
 
   const {
     todos,
@@ -73,8 +74,6 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
     setSearchQuery,
     statusFilter,
     setStatusFilter,
-    priorityFilter,
-    setPriorityFilter,
     streak,
     getSectionTodos,
     getPastPendingTasks,
@@ -111,31 +110,33 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (openAddModalRequest > 0) {
       setAddModalVisible(true);
     }
   }, [openAddModalRequest]);
+
   const [binModalVisible, setBinModalVisible] = useState(false);
   const [streakModalVisible, setStreakModalVisible] = useState(false);
   const [analyticsModalVisible, setAnalyticsModalVisible] = useState(false);
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
-  const [calendarModalVisible, setCalendarModalVisible] = useState(false);
-  const [celebrationVisible, setCelebrationVisible] = useState(false);
   const [focusItem, setFocusItem] = useState<TodoItem | null>(null);
-  const [transferItem, setTransferItem] = useState<TodoItem | null>(null);
   const [editingItem, setEditingItem] = useState<TodoItem | null>(null);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-
-  const isToday = selectedDate === getTodayKey();
-  const pastPending = useMemo(() => getPastPendingTasks(activeSection), [getPastPendingTasks, activeSection]);
+  const [calendarModalVisible, setCalendarModalVisible] = useState(false);
+  const [transferItem, setTransferItem] = useState<TodoItem | null>(null);
+  const [celebrationVisible, setCelebrationVisible] = useState(false);
 
   const sectionTodos = useMemo(
     () => getSectionTodos(activeSection, selectedDate),
     [getSectionTodos, activeSection, selectedDate]
   );
 
-  // Counts for the active section & date
+  const isToday = selectedDate === getTodayKey();
+  const pastPending = useMemo(
+    () => (isToday ? getPastPendingTasks(activeSection) : []),
+    [isToday, getPastPendingTasks, activeSection]
+  );
+
   const dayTodos = useMemo(
     () => todos.filter((t) => t.section === activeSection && t.date === selectedDate),
     [todos, activeSection, selectedDate]
@@ -250,6 +251,8 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
         translucent={true}
       />
 
+
+
       {/* Top Header with "Daily Focus" title and sleek action buttons */}
       <View style={[styles.header, { paddingTop: topInset + 8 }]}>
         <View style={styles.headerLeftRow}>
@@ -283,7 +286,7 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
             <Text style={styles.streakText}>{streak}d</Text>
           </TouchableOpacity>
 
-          {/* Quick 1-Click Dark/Light Theme Toggle (Small circle before Productivity/Trophy) */}
+          {/* Quick 1-Click Dark/Light Theme Toggle */}
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel={`Switch to ${colorScheme === 'dark' ? 'Light' : 'Dark'} mode`}
@@ -318,7 +321,7 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
             <Ionicons name="trophy-outline" size={15} color="#3B82F6" />
           </TouchableOpacity>
 
-          {/* Settings & Hub Button (LAST) */}
+          {/* Settings & Hub Button */}
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Open Settings and Hub"
@@ -338,13 +341,14 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
         onOpenCalendar={handleOpenCalendar}
       />
 
-      {/* Content */}
-      {isLoading && todos.length === 0 ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={sectionConfig.color} />
-        </View>
-      ) : (
-        <TaskList
+      {/* Content Area with Soft Gradient Dissolve */}
+      <View style={styles.contentArea}>
+        {isLoading && todos.length === 0 ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={sectionConfig.color} />
+          </View>
+        ) : (
+          <TaskList
           todos={sectionTodos}
           sectionConfig={sectionConfig}
           onToggle={handleToggleTaskWithCelebration}
@@ -359,6 +363,13 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
           onDeleteBatch={deleteBatchTodos}
           onToggleBatchComplete={toggleBatchComplete}
           onMoveBatchToTomorrow={(ids) => moveBatchToDate(ids, getTomorrowKey())}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          totalCount={totalCount}
+          pendingCount={pendingCount}
+          completedCount={completedCount}
           headerContent={
             <>
               {/* Rollover Banner for Today */}
@@ -369,26 +380,20 @@ export const SectionTodoScreen: React.FC<SectionTodoScreenProps> = ({ sectionKey
                   onRollover={() => rolloverPastTasks(activeSection)}
                 />
               )}
-
-              {/* Search & Status Filters */}
-              <TaskFilterBar
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                statusFilter={statusFilter}
-                onStatusFilterChange={setStatusFilter}
-                priorityFilter={priorityFilter}
-                onPriorityFilterChange={setPriorityFilter}
-                sectionConfig={sectionConfig}
-                totalCount={totalCount}
-                pendingCount={pendingCount}
-                completedCount={completedCount}
-                isSearchVisible={isSearchOpen}
-                onCloseSearch={() => setIsSearchOpen(false)}
-              />
             </>
           }
         />
       )}
+
+        {/* Soft Linear Gradient Fade-Out Overlay */}
+        <LinearGradient
+          colors={['transparent', theme.background]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          pointerEvents="none"
+          style={[styles.bottomGradientFade, { height: (insets.bottom > 0 ? insets.bottom : 14) + 65 }]}
+        />
+      </View>
 
       {/* Undo Toast Snackbar */}
       <UndoToast
@@ -537,6 +542,18 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
   },
+
+  contentArea: {
+    flex: 1,
+    position: 'relative',
+  },
+  bottomGradientFade: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 20,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -647,3 +664,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.45)',
   },
 });
+
+
+
+
+
+

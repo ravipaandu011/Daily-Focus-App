@@ -1,4 +1,4 @@
-import 'react-native-url-polyfill/auto';
+﻿import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
@@ -22,29 +22,64 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 });
 
 /**
+ * Helper to safely extract parameters from URL query strings or hash fragments
+ */
+function extractParamFromUrl(url: string, paramName: string): string | null {
+  try {
+    // Check hash fragment first (#access_token=...)
+    if (url.includes('#')) {
+      const hashPart = url.split('#')[1];
+      const match = hashPart.match(new RegExp(`(?:^|&)${paramName}=([^&]*)`));
+      if (match) return decodeURIComponent(match[1]);
+    }
+    // Check query params (?code=...)
+    if (url.includes('?')) {
+      const queryPart = url.split('?')[1]?.split('#')[0];
+      const match = queryPart.match(new RegExp(`(?:^|&)${paramName}=([^&]*)`));
+      if (match) return decodeURIComponent(match[1]);
+    }
+  } catch {}
+  return null;
+}
+
+/**
  * Creates a session from an OAuth callback URL.
- * Uses expo-auth-session QueryParams to reliably parse hash fragments.
+ * Handles both Supabase PKCE flow (?code=...) and Implicit flow (#access_token=...&refresh_token=...).
  */
 export async function createSessionFromUrl(url: string) {
-  const { params, errorCode } = QueryParams.getQueryParams(url);
+  try {
+    const { params, errorCode } = QueryParams.getQueryParams(url);
 
-  if (errorCode) {
-    return { error: new Error(errorCode) };
+    if (errorCode) {
+      return { error: new Error(errorCode) };
+    }
+
+    // 1. PKCE Flow (Authorization Code Exchange)
+    const code = params.code || extractParamFromUrl(url, 'code');
+    if (code) {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) return { error };
+      return { data, error: null };
+    }
+
+    // 2. Implicit Flow (Tokens in query or hash fragment)
+    let accessToken = params.access_token || extractParamFromUrl(url, 'access_token');
+    let refreshToken = params.refresh_token || extractParamFromUrl(url, 'refresh_token');
+
+    if (accessToken && refreshToken) {
+      const { data, error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+      if (error) return { error };
+      return { data, error: null };
+    }
+
+    return { error: new Error('No valid tokens or authorization code found in callback URL') };
+  } catch (err: any) {
+    console.error('Error creating session from URL:', err);
+    return { error: err };
   }
-
-  const { access_token, refresh_token } = params;
-
-  if (!access_token || !refresh_token) {
-    return { error: new Error('Missing tokens in callback URL') };
-  }
-
-  const { data, error } = await supabase.auth.setSession({
-    access_token,
-    refresh_token,
-  });
-
-  if (error) return { error };
-  return { data, error: null };
 }
 
 /**
@@ -53,9 +88,18 @@ export async function createSessionFromUrl(url: string) {
  */
 export async function signInWithSocialOAuth(provider: 'google' = 'google') {
   try {
-    // Generate the redirect URL using Expo Linking
-    // In Expo Go: exp://xxx.exp.direct (tunnel) or exp://192.168.x.x:8081 (LAN)
-    // In standalone build: personaltodoapp://
+    // 1. Web Platform handling
+    if (Platform.OS === 'web') {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
+        },
+      });
+      return { error };
+    }
+
+    // 2. Native Mobile Platform (iOS / Android)
     const redirectTo = Linking.createURL('');
 
     const { data, error } = await supabase.auth.signInWithOAuth({

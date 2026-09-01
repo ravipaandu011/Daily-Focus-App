@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   Modal,
   View,
@@ -310,7 +310,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                 <TextInput
                   value={displayName}
                   onChangeText={setDisplayName}
-                  placeholder="Alex Morgan"
+                placeholder="Full name"
                   placeholderTextColor={theme.textMuted}
                   autoCapitalize="words"
                   style={[styles.input, { color: theme.text }]}
@@ -331,7 +331,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
               <TextInput
                 value={email}
                 onChangeText={setEmail}
-                placeholder="you@example.com"
+                placeholder="Email address"
                 placeholderTextColor={theme.textMuted}
                 autoCapitalize="none"
                 keyboardType="email-address"
@@ -353,7 +353,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
               <TextInput
                 value={password}
                 onChangeText={setPassword}
-                placeholder="••••••••"
+                placeholder="Password"
                 placeholderTextColor={theme.textMuted}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
@@ -386,7 +386,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                 <TextInput
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
-                  placeholder="Repeat password"
+                placeholder="Confirm password"
                   placeholderTextColor={theme.textMuted}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    height: 52,
+    height: 44,
     borderRadius: 16,
   },
   submitBtnText: {
@@ -598,3 +598,4 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+

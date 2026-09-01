@@ -1,4 +1,4 @@
-import { Colors } from '@/constants/theme';
+﻿import { Colors } from '@/constants/theme';
 import { SocialProvider, useAuth } from '@/context/auth-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,7 +16,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  BackHandler,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -39,34 +39,25 @@ export const AuthScreen: React.FC = () => {
   const [socialLoading, setSocialLoading] = useState<SocialProvider | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Forgot password state
+  // Forgot password modal state
   const [resetModalVisible, setResetModalVisible] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isResetting, setIsResetting] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
 
+  // Custom Notice Dialog state
   const [noticeDialog, setNoticeDialog] = useState<{
     visible: boolean;
     title: string;
     message: string;
-    variant: 'info' | 'warning' | 'danger';
+    variant?: 'info' | 'danger' | 'warning';
     iconName?: keyof typeof Ionicons.glyphMap;
   }>({
     visible: false,
     title: '',
     message: '',
-    variant: 'info',
   });
-
-  React.useEffect(() => {
-    if (!resetModalVisible) return;
-    const backSub = BackHandler.addEventListener('hardwareBackPress', () => {
-      setResetModalVisible(false);
-      return true;
-    });
-    return () => backSub.remove();
-  }, [resetModalVisible]);
 
   const handleSocialSignIn = async (provider: SocialProvider) => {
     if (Platform.OS !== 'web') {
@@ -136,7 +127,7 @@ export const AuthScreen: React.FC = () => {
         }
         setNoticeDialog({
           visible: true,
-          title: 'Account Created! 🎉',
+          title: 'Account Created!',
           message: 'Your account is ready! If your Supabase project has email verification enabled, check your inbox to confirm your email before signing in.',
           variant: 'info',
           iconName: 'checkmark-circle',
@@ -169,12 +160,10 @@ export const AuthScreen: React.FC = () => {
     }
     setResetError(null);
     setIsResetting(true);
-
     const { error } = await sendPasswordReset(trimmed);
     setIsResetting(false);
-
     if (error) {
-      setResetError(error.message);
+      setResetError(error.message || 'Failed to send reset link.');
     } else {
       setResetSuccess(true);
       if (Platform.OS !== 'web') {
@@ -186,13 +175,13 @@ export const AuthScreen: React.FC = () => {
   const timeGreeting = useMemo(() => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) {
-      return { greeting: 'Good morning', emoji: '☀️', subtitle: 'Start your day with clarity & focus' };
+      return { greeting: 'Good morning', icon: 'sunny-outline', subtitle: 'Start your day with clarity & focus' };
     } else if (hour >= 12 && hour < 17) {
-      return { greeting: 'Good afternoon', emoji: '🌤️', subtitle: 'Keep your momentum going strong' };
+      return { greeting: 'Good afternoon', icon: 'partly-sunny-outline', subtitle: 'Keep your momentum strong' };
     } else if (hour >= 17 && hour < 22) {
-      return { greeting: 'Good evening', emoji: '🌆', subtitle: 'Wrap up your daily achievements' };
+      return { greeting: 'Good evening', icon: 'cloudy-night-outline', subtitle: 'Wrap up your daily achievements' };
     } else {
-      return { greeting: 'Good night', emoji: '🌙', subtitle: 'Plan ahead & prepare for tomorrow' };
+      return { greeting: 'Good night', icon: 'moon-outline', subtitle: 'Plan ahead & prepare for tomorrow' };
     }
   }, []);
 
@@ -210,72 +199,71 @@ export const AuthScreen: React.FC = () => {
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
-        {/* Compact Brand Hero */}
+        
+        {/* Brand Hero */}
         <View style={styles.brandContainer}>
-          <LinearGradient
-            colors={['#7C3AED', '#C026D3', '#F97316']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.logoGradientBadge}>
-            <Ionicons name="checkmark-done" size={34} color="#FFFFFF" />
-          </LinearGradient>
-
+          <Image
+            source={require('@/assets/images/icon.png')}
+            style={styles.brandLogoImage}
+            resizeMode="contain"
+          />
           <Text style={[styles.brandTitle, { color: theme.text }]}>Daily Focus</Text>
-
+          
           <View
             style={[
               styles.greetingPill,
               {
-                backgroundColor: isDark ? '#1E293B' : '#FDF4FF',
-                borderColor: isDark ? '#334155' : '#F5D0FE',
+                backgroundColor: isDark ? 'rgba(232, 121, 249, 0.08)' : '#FDF4FF',
+                borderColor: isDark ? 'rgba(232, 121, 249, 0.25)' : '#F5D0FE',
               },
             ]}>
-            <Text style={styles.greetingEmoji}>{timeGreeting.emoji}</Text>
+            <Ionicons
+              name={timeGreeting.icon as any}
+              size={13}
+              color={isDark ? '#D8B4FE' : '#A21CAF'}
+            />
             <Text
               style={[
                 styles.greetingText,
-                { color: isDark ? '#E879F9' : '#A21CAF' },
+                { color: isDark ? '#D8B4FE' : '#A21CAF' },
               ]}>
-              {timeGreeting.greeting} — {timeGreeting.subtitle}
+              {`${timeGreeting.greeting} \u2022 ${timeGreeting.subtitle}`}
             </Text>
           </View>
         </View>
 
-        {/* Unified Auth Card — everything in one clean card */}
+        {/* Unified Auth Card */}
         <View
           style={[
             styles.authCard,
-            { backgroundColor: theme.card, borderColor: theme.cardBorder },
+            { backgroundColor: isDark ? '#13192B' : theme.card, borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.cardBorder },
           ]}>
+          
           {/* Mode Switcher Tabs */}
           <View
             style={[
               styles.tabSwitcher,
-              { backgroundColor: theme.inputBg },
+              { backgroundColor: isDark ? '#0E1424' : theme.inputBg },
             ]}>
             <TouchableOpacity
-              activeOpacity={0.8}
+              activeOpacity={0.85}
               onPress={() => {
                 setMode('signin');
                 setErrorMessage(null);
               }}
               style={[
                 styles.tabBtn,
-                mode === 'signin' && [
-                  styles.tabBtnActive,
-                  { backgroundColor: isDark ? '#3B0764' : '#FFFFFF' },
-                ],
+                mode === 'signin' && styles.tabBtnActive,
               ]}>
               <Ionicons
-                name={mode === 'signin' ? 'log-in' : 'log-in-outline'}
+                name="log-in-outline"
                 size={16}
-                color={mode === 'signin' ? (isDark ? '#E879F9' : '#A21CAF') : theme.textMuted}
-                style={{ marginBottom: 2 }}
+                color={mode === 'signin' ? '#FFFFFF' : (isDark ? '#94A3B8' : theme.textSecondary)}
               />
               <Text
                 style={[
                   styles.tabBtnText,
-                  { color: mode === 'signin' ? (isDark ? '#E879F9' : '#A21CAF') : theme.textSecondary },
+                  { color: mode === 'signin' ? '#FFFFFF' : (isDark ? '#94A3B8' : theme.textSecondary) },
                   mode === 'signin' && styles.tabBtnTextActive,
                 ]}>
                 Sign In
@@ -283,28 +271,24 @@ export const AuthScreen: React.FC = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              activeOpacity={0.8}
+              activeOpacity={0.85}
               onPress={() => {
                 setMode('signup');
                 setErrorMessage(null);
               }}
               style={[
                 styles.tabBtn,
-                mode === 'signup' && [
-                  styles.tabBtnActive,
-                  { backgroundColor: isDark ? '#3B0764' : '#FFFFFF' },
-                ],
+                mode === 'signup' && styles.tabBtnActive,
               ]}>
               <Ionicons
-                name={mode === 'signup' ? 'person-add' : 'person-add-outline'}
+                name="person-add-outline"
                 size={16}
-                color={mode === 'signup' ? (isDark ? '#E879F9' : '#A21CAF') : theme.textMuted}
-                style={{ marginBottom: 2 }}
+                color={mode === 'signup' ? '#FFFFFF' : (isDark ? '#94A3B8' : theme.textSecondary)}
               />
               <Text
                 style={[
                   styles.tabBtnText,
-                  { color: mode === 'signup' ? (isDark ? '#E879F9' : '#A21CAF') : theme.textSecondary },
+                  { color: mode === 'signup' ? '#FFFFFF' : (isDark ? '#94A3B8' : theme.textSecondary) },
                   mode === 'signup' && styles.tabBtnTextActive,
                 ]}>
                 Create Account
@@ -312,7 +296,7 @@ export const AuthScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Google Sign In — inside the card */}
+          {/* Continue with Google */}
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Continue with Google"
@@ -322,12 +306,12 @@ export const AuthScreen: React.FC = () => {
             style={[
               styles.googleBtn,
               {
-                backgroundColor: isDark ? '#1E293B' : '#FAFAFA',
-                borderColor: isDark ? '#334155' : '#E2E8F0',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#FAFAFA',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#E2E8F0',
               },
             ]}>
             <View style={styles.socialBtnInner}>
-              <Ionicons name="logo-google" size={18} color="#EA4335" />
+              <Ionicons name="logo-google" size={19} color="#EA4335" />
               <Text style={[styles.googleBtnText, { color: theme.text }]}>Continue with Google</Text>
             </View>
             {socialLoading === 'google' && (
@@ -335,11 +319,11 @@ export const AuthScreen: React.FC = () => {
             )}
           </TouchableOpacity>
 
-          {/* Inline Divider */}
+          {/* OR Divider */}
           <View style={styles.dividerRow}>
-            <View style={[styles.dividerLine, { backgroundColor: theme.cardBorder }]} />
-            <Text style={[styles.dividerText, { color: theme.textMuted }]}>or</Text>
-            <View style={[styles.dividerLine, { backgroundColor: theme.cardBorder }]} />
+            <View style={[styles.dividerLine, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.cardBorder }]} />
+            <Text style={[styles.dividerText, { color: isDark ? '#64748B' : theme.textMuted }]}>OR</Text>
+            <View style={[styles.dividerLine, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.cardBorder }]} />
           </View>
 
           {/* Error Banner */}
@@ -360,18 +344,18 @@ export const AuthScreen: React.FC = () => {
           {/* Sign Up: Name Field */}
           {mode === 'signup' && (
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>FULL NAME</Text>
+              <Text style={[styles.inputLabel, { color: isDark ? '#94A3B8' : theme.textSecondary }]}>FULL NAME</Text>
               <View
                 style={[
                   styles.inputWrapper,
-                  { backgroundColor: theme.inputBg, borderColor: theme.inputBorder },
+                  { backgroundColor: isDark ? '#0F172A' : theme.inputBg, borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.inputBorder },
                 ]}>
-                <Ionicons name="person-outline" size={17} color={theme.textSecondary} />
+                <Ionicons name="person-outline" size={18} color={isDark ? '#94A3B8' : theme.textSecondary} style={styles.inputLeadingIcon} />
                 <TextInput
                   value={displayName}
                   onChangeText={setDisplayName}
                   placeholder="Alex Morgan"
-                  placeholderTextColor={theme.textMuted}
+                  placeholderTextColor={isDark ? '#64748B' : theme.textMuted}
                   autoCapitalize="words"
                   style={[styles.input, { color: theme.text }]}
                 />
@@ -381,18 +365,18 @@ export const AuthScreen: React.FC = () => {
 
           {/* Email Field */}
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>EMAIL</Text>
+            <Text style={[styles.inputLabel, { color: isDark ? '#94A3B8' : theme.textSecondary }]}>EMAIL</Text>
             <View
               style={[
                 styles.inputWrapper,
-                { backgroundColor: theme.inputBg, borderColor: theme.inputBorder },
+                { backgroundColor: isDark ? '#0F172A' : theme.inputBg, borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.inputBorder },
               ]}>
-              <Ionicons name="mail-outline" size={17} color={theme.textSecondary} />
+              <Ionicons name="mail-outline" size={18} color={isDark ? '#94A3B8' : theme.textSecondary} style={styles.inputLeadingIcon} />
               <TextInput
                 value={email}
                 onChangeText={setEmail}
                 placeholder="alex@example.com"
-                placeholderTextColor={theme.textMuted}
+                placeholderTextColor={isDark ? '#64748B' : theme.textMuted}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 autoComplete="email"
@@ -403,29 +387,30 @@ export const AuthScreen: React.FC = () => {
 
           {/* Password Field */}
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>PASSWORD</Text>
+            <Text style={[styles.inputLabel, { color: isDark ? '#94A3B8' : theme.textSecondary }]}>PASSWORD</Text>
             <View
               style={[
                 styles.inputWrapper,
-                { backgroundColor: theme.inputBg, borderColor: theme.inputBorder },
+                { backgroundColor: isDark ? '#0F172A' : theme.inputBg, borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.inputBorder },
               ]}>
-              <Ionicons name="lock-closed-outline" size={17} color={theme.textSecondary} />
+              <Ionicons name="lock-closed-outline" size={18} color={isDark ? '#94A3B8' : theme.textSecondary} style={styles.inputLeadingIcon} />
               <TextInput
                 value={password}
                 onChangeText={setPassword}
                 placeholder="At least 6 characters"
-                placeholderTextColor={theme.textMuted}
+                placeholderTextColor={isDark ? '#64748B' : theme.textMuted}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 style={[styles.input, { color: theme.text }]}
               />
               <TouchableOpacity
                 onPress={() => setShowPassword((p) => !p)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={styles.eyeToggleBtn}>
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                  size={17}
-                  color={theme.textSecondary}
+                  size={18}
+                  color={isDark ? '#94A3B8' : theme.textSecondary}
                 />
               </TouchableOpacity>
             </View>
@@ -434,20 +419,20 @@ export const AuthScreen: React.FC = () => {
           {/* Sign Up: Confirm Password */}
           {mode === 'signup' && (
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>
+              <Text style={[styles.inputLabel, { color: isDark ? '#94A3B8' : theme.textSecondary }]}>
                 CONFIRM PASSWORD
               </Text>
               <View
                 style={[
                   styles.inputWrapper,
-                  { backgroundColor: theme.inputBg, borderColor: theme.inputBorder },
+                  { backgroundColor: isDark ? '#0F172A' : theme.inputBg, borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.inputBorder },
                 ]}>
-                <Ionicons name="shield-checkmark-outline" size={17} color={theme.textSecondary} />
+                <Ionicons name="shield-checkmark-outline" size={18} color={isDark ? '#94A3B8' : theme.textSecondary} style={styles.inputLeadingIcon} />
                 <TextInput
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
-                  placeholder="Repeat your password"
-                  placeholderTextColor={theme.textMuted}
+                  placeholder="Confirm password"
+                  placeholderTextColor={isDark ? '#64748B' : theme.textMuted}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   style={[styles.input, { color: theme.text }]}
@@ -456,7 +441,7 @@ export const AuthScreen: React.FC = () => {
             </View>
           )}
 
-          {/* Submit Button */}
+          {/* Primary Gradient Sign In Button */}
           <TouchableOpacity
             activeOpacity={0.88}
             disabled={isLoading}
@@ -465,7 +450,7 @@ export const AuthScreen: React.FC = () => {
             <LinearGradient
               colors={['#7C3AED', '#C026D3', '#F97316']}
               start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+              end={{ x: 1, y: 0 }}
               style={styles.submitBtnGradient}>
               {isLoading ? (
                 <ActivityIndicator color="#FFFFFF" />
@@ -473,8 +458,9 @@ export const AuthScreen: React.FC = () => {
                 <>
                   <Ionicons
                     name={mode === 'signin' ? 'log-in-outline' : 'person-add-outline'}
-                    size={19}
+                    size={20}
                     color="#FFFFFF"
+                    style={{ marginRight: 8 }}
                   />
                   <Text style={styles.submitBtnText}>
                     {mode === 'signin' ? 'Sign In' : 'Create Account'}
@@ -484,7 +470,7 @@ export const AuthScreen: React.FC = () => {
             </LinearGradient>
           </TouchableOpacity>
 
-          {/* Forgot Password — below submit, centered, sign in only */}
+          {/* Forgot Password */}
           {mode === 'signin' && (
             <TouchableOpacity
               activeOpacity={0.7}
@@ -495,7 +481,7 @@ export const AuthScreen: React.FC = () => {
                 setResetModalVisible(true);
               }}
               style={styles.forgotBtn}>
-              <Text style={styles.forgotText}>Forgot your password?</Text>
+              <Text style={[styles.forgotText, { color: isDark ? '#C084FC' : '#9333EA' }]}>Forgot your password?</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -517,7 +503,9 @@ export const AuthScreen: React.FC = () => {
             <View style={styles.modalHeaderRow}>
               <View style={styles.modalHeaderLeft}>
                 <LinearGradient
-                  colors={['#7C3AED', '#C026D3']}
+                  colors={['#7C3AED', '#C026D3', '#F97316']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
                   style={styles.resetIconBadge}>
                   <Ionicons name="key-outline" size={18} color="#FFFFFF" />
                 </LinearGradient>
@@ -525,8 +513,8 @@ export const AuthScreen: React.FC = () => {
               </View>
               <TouchableOpacity
                 onPress={() => setResetModalVisible(false)}
-                style={[styles.modalCloseBtn, { backgroundColor: theme.inputBg }]}>
-                <Ionicons name="close" size={16} color={theme.text} />
+                style={[styles.modalCloseBtn, { backgroundColor: theme.cardBorder }]}>
+                <Ionicons name="close" size={16} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -534,13 +522,13 @@ export const AuthScreen: React.FC = () => {
               <View style={styles.resetSuccessContainer}>
                 <Ionicons name="mail-unread-outline" size={42} color="#10B981" />
                 <Text style={[styles.resetSuccessTitle, { color: theme.text }]}>
-                  Reset Link Sent!
+                  Check Your Inbox!
                 </Text>
                 <Text style={[styles.resetSuccessSub, { color: theme.textSecondary }]}>
-                  We've sent a password reset email to {resetEmail}. Please check your inbox.
+                  We sent a password reset link to{'\n'}
+                  <Text style={{ fontWeight: '700', color: theme.text }}>{resetEmail}</Text>
                 </Text>
                 <TouchableOpacity
-                  activeOpacity={0.8}
                   onPress={() => setResetModalVisible(false)}
                   style={styles.resetDoneBtn}>
                   <Text style={styles.resetDoneBtnText}>Back to Sign In</Text>
@@ -549,7 +537,7 @@ export const AuthScreen: React.FC = () => {
             ) : (
               <View style={styles.resetForm}>
                 <Text style={[styles.resetDesc, { color: theme.textSecondary }]}>
-                  Enter the email associated with your account and we will send you a link to reset your password.
+                  Enter the email address associated with your account and we will send you a link to reset your password.
                 </Text>
 
                 {resetError && (
@@ -564,7 +552,6 @@ export const AuthScreen: React.FC = () => {
                     styles.inputWrapper,
                     { backgroundColor: theme.inputBg, borderColor: theme.inputBorder },
                   ]}>
-                  <Ionicons name="mail-outline" size={18} color={theme.textSecondary} />
                   <TextInput
                     value={resetEmail}
                     onChangeText={setResetEmail}
@@ -623,23 +610,15 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
   },
-  // ── Brand Hero (compact) ──────────────────────────
   brandContainer: {
     alignItems: 'center',
     marginBottom: 20,
     gap: 6,
   },
-  logoGradientBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 8,
+  brandLogoImage: {
+    width: 76,
+    height: 76,
+    borderRadius: 20,
     marginBottom: 4,
   },
   brandTitle: {
@@ -656,15 +635,11 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     borderWidth: 1,
   },
-  greetingEmoji: {
-    fontSize: 12,
-  },
   greetingText: {
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.1,
   },
-  // ── Unified Auth Card ─────────────────────────────
   authCard: {
     borderRadius: 28,
     borderWidth: 1,
@@ -672,15 +647,15 @@ const styles = StyleSheet.create({
     gap: 14,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.12,
     shadowRadius: 20,
-    elevation: 5,
+    elevation: 6,
   },
   tabSwitcher: {
     flexDirection: 'row',
-    padding: 3,
+    padding: 4,
     borderRadius: 9999,
-    gap: 2,
+    gap: 4,
   },
   tabBtn: {
     flex: 1,
@@ -692,18 +667,19 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tabBtnActive: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: '#7C3AED',
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   tabBtnText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
   },
   tabBtnTextActive: {
-    fontWeight: '800',
+    fontWeight: '700',
   },
   googleBtn: {
     height: 48,
@@ -721,7 +697,7 @@ const styles = StyleSheet.create({
   },
   googleBtnText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   socialSpinner: {
     marginLeft: 10,
@@ -760,8 +736,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   inputLabel: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: 11,
+    fontWeight: '700',
     letterSpacing: 0.8,
     paddingLeft: 4,
   },
@@ -772,7 +748,9 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 9999,
     borderWidth: 1,
-    gap: 10,
+  },
+  inputLeadingIcon: {
+    marginRight: 10,
   },
   input: {
     flex: 1,
@@ -780,13 +758,17 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     height: '100%',
   },
+  eyeToggleBtn: {
+    padding: 4,
+  },
   submitBtnTouchable: {
+    width: '100%',
     shadowColor: '#7C3AED',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.35,
     shadowRadius: 14,
     elevation: 6,
-    marginTop: 2,
+    marginTop: 4,
   },
   submitBtnGradient: {
     flexDirection: 'row',
@@ -798,19 +780,17 @@ const styles = StyleSheet.create({
   },
   submitBtnText: {
     color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
+    fontSize: 16,
+    fontWeight: '700',
   },
   forgotBtn: {
     alignSelf: 'center',
     paddingVertical: 4,
   },
   forgotText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#A21CAF',
+    fontSize: 13,
+    fontWeight: '600',
   },
-  // ── Reset Password Modal ──────────────────────────
   modalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.65)',
@@ -920,4 +900,3 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
-

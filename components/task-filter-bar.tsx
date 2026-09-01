@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import {
   View,
   Text,
@@ -35,8 +35,6 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
   onSearchChange,
   statusFilter,
   onStatusFilterChange,
-  priorityFilter = 'all',
-  onPriorityFilterChange,
   sectionConfig,
   totalCount,
   pendingCount,
@@ -45,6 +43,7 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
   onCloseSearch,
 }) => {
   const colorScheme = useColorScheme() ?? "light";
+  const isDark = colorScheme === "dark";
   const theme = Colors[colorScheme];
   const [internalSearchOpen, setInternalSearchOpen] = useState(false);
 
@@ -70,16 +69,6 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
     }
   };
 
-  const handleCyclePriority = () => {
-    if (Platform.OS !== "web") {
-      Haptics.selectionAsync();
-    }
-    const order: (PriorityLevel | 'all')[] = ['all', 'high', 'medium', 'low'];
-    const currentIndex = order.indexOf(priorityFilter || 'all');
-    const nextPriority = order[(currentIndex + 1) % order.length];
-    onPriorityFilterChange?.(nextPriority);
-  };
-
   const handleClearSearch = () => {
     onSearchChange("");
     setInternalSearchOpen(false);
@@ -101,7 +90,7 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
         >
           <Ionicons
             name="search-outline"
-            size={17}
+            size={15}
             color={sectionConfig.color}
             style={styles.searchIcon}
           />
@@ -120,12 +109,12 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
             onPress={handleClearSearch}
             style={styles.clearBtn}
           >
-            <Ionicons name="close-circle" size={17} color={theme.textMuted} />
+            <Ionicons name="close-circle" size={15} color={theme.textMuted} />
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Filter Status Chips Row + Priority Filter + Search Pill */}
+      {/* Filter Status Chips Row */}
       <View style={styles.filterChipsRow}>
         {/* All Chip */}
         <TouchableOpacity
@@ -146,7 +135,10 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
             <View
               style={[
                 styles.chipInactive,
-                { backgroundColor: theme.card, borderColor: theme.cardBorder },
+                {
+                  backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                  borderColor: isDark ? 'rgba(51, 65, 85, 0.6)' : 'rgba(226, 232, 240, 0.9)',
+                },
               ]}
             >
               <Text
@@ -182,7 +174,10 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
             <View
               style={[
                 styles.chipInactive,
-                { backgroundColor: theme.card, borderColor: theme.cardBorder },
+                {
+                  backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                  borderColor: isDark ? 'rgba(51, 65, 85, 0.6)' : 'rgba(226, 232, 240, 0.9)',
+                },
               ]}
             >
               <Text
@@ -216,7 +211,10 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
             <View
               style={[
                 styles.chipInactive,
-                { backgroundColor: theme.card, borderColor: theme.cardBorder },
+                {
+                  backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                  borderColor: isDark ? 'rgba(51, 65, 85, 0.6)' : 'rgba(226, 232, 240, 0.9)',
+                },
               ]}
             >
               <Text
@@ -231,54 +229,7 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
           )}
         </TouchableOpacity>
 
-        {/* Priority Filter Pill Button */}
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel="Filter by priority"
-          activeOpacity={0.8}
-          onPress={handleCyclePriority}
-          style={styles.searchPillTouchable}
-        >
-          {priorityFilter !== 'all' ? (
-            <View
-              style={[
-                styles.searchPillActive,
-                {
-                  backgroundColor:
-                    priorityFilter === 'high'
-                      ? '#EF4444'
-                      : priorityFilter === 'medium'
-                      ? '#F59E0B'
-                      : '#3B82F6',
-                  borderColor: 'rgba(255, 255, 255, 0.45)',
-                  shadowColor:
-                    priorityFilter === 'high'
-                      ? '#EF4444'
-                      : priorityFilter === 'medium'
-                      ? '#F59E0B'
-                      : '#3B82F6',
-                },
-              ]}
-            >
-              <Ionicons name="flag" size={13} color="#FFFFFF" />
-            </View>
-          ) : (
-            <View
-              style={[
-                styles.searchPillInactive,
-                { backgroundColor: theme.card, borderColor: theme.cardBorder },
-              ]}
-            >
-              <Ionicons
-                name="flag-outline"
-                size={13}
-                color={theme.textSecondary}
-              />
-            </View>
-          )}
-        </TouchableOpacity>
-
-        {/* Search Pill Button */}
+        {/* Search Toggle Pill */}
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel="Toggle search"
@@ -296,18 +247,21 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
                 { shadowColor: sectionConfig.color },
               ]}
             >
-              <Ionicons name="search" size={14} color="#FFFFFF" />
+              <Ionicons name="search" size={13} color="#FFFFFF" />
             </LinearGradient>
           ) : (
             <View
               style={[
                 styles.searchPillInactive,
-                { backgroundColor: theme.card, borderColor: theme.cardBorder },
+                {
+                  backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                  borderColor: isDark ? 'rgba(51, 65, 85, 0.6)' : 'rgba(226, 232, 240, 0.9)',
+                },
               ]}
             >
               <Ionicons
                 name="search-outline"
-                size={14}
+                size={13}
                 color={theme.textSecondary}
               />
             </View>
@@ -321,57 +275,58 @@ const TaskFilterBarComponent: React.FC<TaskFilterBarProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 16,
-    marginBottom: 6,
-    gap: 8,
+    marginBottom: 4,
+    gap: 4,
   },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    height: 42,
+    paddingHorizontal: 14,
+    height: 36,
     borderRadius: 9999,
     borderWidth: 1,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
-    shadowRadius: 6,
+    shadowRadius: 4,
     elevation: 2,
+    marginBottom: 2,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 6,
   },
   searchInput: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 12.5,
     paddingVertical: 0,
     fontWeight: "500",
   },
   clearBtn: {
-    padding: 4,
-    marginLeft: 4,
+    padding: 3,
+    marginLeft: 3,
   },
   filterChipsRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 5,
   },
   chipTouchable: {
     flex: 1,
   },
   chipActive: {
-    height: 31,
+    height: 28,
     borderRadius: 9999,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1.2,
+    borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.45)",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowRadius: 3,
     elevation: 2,
   },
   chipInactive: {
-    height: 31,
+    height: 28,
     borderRadius: 9999,
     borderWidth: 1,
     alignItems: "center",
@@ -379,35 +334,35 @@ const styles = StyleSheet.create({
   },
   chipTextActive: {
     color: "#FFFFFF",
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: "700",
     letterSpacing: -0.1,
   },
   chipTextInactive: {
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: "600",
     letterSpacing: -0.1,
   },
   searchPillTouchable: {
-    width: 31,
+    width: 28,
   },
   searchPillActive: {
-    height: 31,
-    width: 31,
-    borderRadius: 15.5,
+    height: 28,
+    width: 28,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1.2,
+    borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.45)",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowRadius: 3,
     elevation: 2,
   },
   searchPillInactive: {
-    height: 31,
-    width: 31,
-    borderRadius: 15.5,
+    height: 28,
+    width: 28,
+    borderRadius: 14,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
@@ -420,7 +375,6 @@ export const TaskFilterBar = React.memo(
     return (
       prev.searchQuery === next.searchQuery &&
       prev.statusFilter === next.statusFilter &&
-      prev.priorityFilter === next.priorityFilter &&
       prev.totalCount === next.totalCount &&
       prev.pendingCount === next.pendingCount &&
       prev.completedCount === next.completedCount &&

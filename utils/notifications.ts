@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+﻿import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -158,7 +158,7 @@ export async function setDailyReminder(
   try {
     const title = isMorning ? '🌅 Morning Focus & Goals' : '🌙 Evening Recap & Wins';
     const body = isMorning
-      ? 'Start your day with clarity! Open Personal To-Do to review your goals.'
+      ? 'Start your day with clarity! Open Daily Focus to review your goals.'
       : 'Check off your completed tasks today and keep your streak alive!';
 
     const notificationId = await Notifications.scheduleNotificationAsync({

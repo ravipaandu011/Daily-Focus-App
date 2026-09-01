@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
+﻿import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
@@ -88,8 +88,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const url = event.url;
         if (!url) return;
         // Only handle URLs that look like OAuth callbacks
-        if (url.includes('access_token') || url.includes('refresh_token') || url.includes('code=')) {
-          await createSessionFromUrl(url);
+        if (url.includes('access_token') || url.includes('refresh_token') || url.includes('code=') || url.includes('error=')) {
+          const { data, error } = await createSessionFromUrl(url);
+          if (!error && data?.session) {
+            setSession(data.session);
+            setUser(data.session.user);
+            setIsGuest(false);
+            AsyncStorage.setItem(GUEST_MODE_KEY, 'false').catch(() => {});
+          }
         }
       } catch (err) {
         console.error('Error handling auth deep link:', err);
@@ -260,3 +266,4 @@ export function useAuth() {
   }
   return context;
 }
+

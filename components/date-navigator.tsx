@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect } from 'react';
+﻿import React, { useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -28,7 +28,7 @@ interface DateNavigatorProps {
   onOpenCalendar?: () => void;
 }
 
-const CHIP_SIZE = 46;
+const CHIP_SIZE = 44;
 const CHIP_GAP = 6;
 
 const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
@@ -77,15 +77,7 @@ const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
   };
 
   return (
-    <View
-      style={[
-        styles.cardContainer,
-        {
-          backgroundColor: isDark ? '#1E293B' : 'rgba(255, 255, 255, 0.95)',
-          borderColor: isDark ? '#334155' : 'rgba(255, 255, 255, 0.90)',
-          shadowColor: isDark ? '#000000' : '#64748B',
-        },
-      ]}>
+    <View style={styles.container}>
       {/* Month & Year Header + Calendar Trigger */}
       <View style={styles.headerRow}>
         <TouchableOpacity
@@ -97,7 +89,7 @@ const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
           </Text>
           <Ionicons
             name="chevron-down"
-            size={13}
+            size={12}
             color={theme.textSecondary}
             style={{ marginLeft: 3 }}
           />
@@ -108,12 +100,12 @@ const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
           accessibilityLabel="Open monthly calendar"
           activeOpacity={0.75}
           onPress={handleCalendarPress}
-          style={[styles.calendarIconBtn, { backgroundColor: theme.inputBg }]}>
-          <Ionicons name="calendar-outline" size={15} color={sectionConfig.color} />
+          style={[styles.calendarIconBtn, { backgroundColor: isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(241, 245, 249, 0.9)' }]}>
+          <Ionicons name="calendar-outline" size={13} color={sectionConfig.color} />
         </TouchableOpacity>
       </View>
 
-      {/* Horizontal Date Ribbon */}
+      {/* Horizontal Date Ribbon - Perfect Circles */}
       <ScrollView
         ref={scrollViewRef}
         horizontal
@@ -152,8 +144,8 @@ const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
                   style={[
                     styles.dateChipInactive,
                     {
-                      backgroundColor: isDark ? '#334155' : '#F8FAFC',
-                      borderColor: isToday ? sectionConfig.color : theme.cardBorder,
+                      backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                      borderColor: isToday ? sectionConfig.color : (isDark ? 'rgba(51, 65, 85, 0.6)' : 'rgba(226, 232, 240, 0.9)'),
                       borderWidth: isToday ? 1.5 : 1,
                     },
                   ]}>
@@ -178,25 +170,18 @@ const DateNavigatorComponent: React.FC<DateNavigatorProps> = ({
 };
 
 const styles = StyleSheet.create({
-  cardContainer: {
+  container: {
     marginHorizontal: 16,
-    marginBottom: 10,
-    paddingTop: 10,
-    paddingBottom: 10,
-    borderRadius: 26,
-    borderWidth: 1.2,
-    overflow: 'hidden',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    marginBottom: 4,
+    paddingTop: 2,
+    paddingBottom: 2,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    marginBottom: 8,
+    paddingHorizontal: 2,
+    marginBottom: 6,
   },
   monthSelectorTouch: {
     flexDirection: 'row',
@@ -204,24 +189,26 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   monthYearTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
-    letterSpacing: -0.3,
+    letterSpacing: -0.2,
   },
   calendarIconBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   ribbonScroll: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 2,
     gap: CHIP_GAP,
     alignItems: 'center',
+    paddingBottom: 2,
   },
   dateChipWrapper: {
     width: CHIP_SIZE,
+    height: CHIP_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -231,12 +218,11 @@ const styles = StyleSheet.create({
     borderRadius: CHIP_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.2,
-    borderColor: 'rgba(255, 255, 255, 0.45)',
-    shadowOffset: { width: 0, height: 3 },
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowRadius: 5,
+    elevation: 3,
   },
   dateChipInactive: {
     width: CHIP_SIZE,
@@ -244,34 +230,40 @@ const styles = StyleSheet.create({
     borderRadius: CHIP_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   weekdayTextActive: {
     color: 'rgba(255, 255, 255, 0.95)',
-    fontSize: 8.5,
-    fontWeight: '700',
+    fontSize: 8,
+    fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.2,
-    marginBottom: 1,
+    marginBottom: 0.5,
   },
   dayNumberActive: {
     color: '#FFFFFF',
-    fontSize: 14.5,
+    fontSize: 14,
     fontWeight: '900',
     letterSpacing: -0.3,
-    lineHeight: 17,
+    lineHeight: 16,
   },
   weekdayTextInactive: {
-    fontSize: 8.5,
-    fontWeight: '600',
+    fontSize: 8,
+    fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.2,
-    marginBottom: 1,
+    marginBottom: 0.5,
   },
   dayNumberInactive: {
-    fontSize: 14.5,
+    fontSize: 14,
     fontWeight: '800',
     letterSpacing: -0.3,
-    lineHeight: 17,
+    lineHeight: 16,
   },
 });
 
@@ -282,4 +274,3 @@ export const DateNavigator = React.memo(DateNavigatorComponent, (prev, next) => 
     prev.sectionConfig.key === next.sectionConfig.key
   );
 });
-

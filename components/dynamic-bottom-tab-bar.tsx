@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Modal,
   TouchableWithoutFeedback,
   BackHandler,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,6 +20,106 @@ import { useCategories } from '@/context/category-context';
 import { CategoryManagerModal } from '@/components/category-manager-modal';
 import { useRouter } from 'expo-router';
 import { ConfirmDialog } from '@/components/confirm-dialog';
+
+interface DockTabItemProps {
+  conf: any;
+  isFocused: boolean;
+  isCustom: boolean;
+  isDark: boolean;
+  itemWidth?: number;
+  onPress: () => void;
+  onLongPress: () => void;
+}
+
+const DockTabItem: React.FC<DockTabItemProps> = ({
+  conf,
+  isFocused,
+  isCustom,
+  isDark,
+  itemWidth,
+  onPress,
+  onLongPress,
+}) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (isFocused) {
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.08,
+          duration: 90,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 4,
+          tension: 70,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [isFocused]);
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={350}
+      style={[
+        styles.tabItem,
+        itemWidth ? { width: itemWidth } : { minWidth: 48 },
+      ]}>
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        {isFocused ? (
+          <LinearGradient
+            colors={conf.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[
+              styles.iconContainer,
+              {
+                shadowColor: conf.gradient[0],
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: 0.35,
+                shadowRadius: 5,
+                elevation: 4,
+              },
+            ]}>
+            {isCustom ? (
+              <Text style={styles.tabEmoji}>{conf.emoji}</Text>
+            ) : (
+              <Ionicons name={conf.activeIconName} size={17} color="#FFFFFF" />
+            )}
+          </LinearGradient>
+        ) : (
+          <View style={styles.iconContainer}>
+            {isCustom ? (
+              <Text style={[styles.tabEmoji, { opacity: 0.6 }]}>{conf.emoji}</Text>
+            ) : (
+              <Ionicons
+                name={conf.iconName}
+                size={17}
+                color={isDark ? '#64748B' : '#94A3B8'}
+              />
+            )}
+          </View>
+        )}
+      </Animated.View>
+      <Text
+        style={[
+          styles.tabLabel,
+          {
+            color: isFocused ? conf.color : (isDark ? '#94A3B8' : '#64748B'),
+            fontWeight: isFocused ? '800' : '600',
+          },
+        ]}
+        numberOfLines={1}>
+        {conf.tabLabel}
+      </Text>
+    </TouchableOpacity>
+  );
+};
 
 const DynamicBottomTabBarComponent: React.FC = () => {
   const colorScheme = useColorScheme() ?? 'light';
@@ -46,10 +147,22 @@ const DynamicBottomTabBarComponent: React.FC = () => {
     key: string;
     title: string;
   } | null>(null);
+  const [pillWidth, setPillWidth] = useState<number>(0);
 
-  const activeConfig = getCategoryConfig(activeCategoryKey);
-  const bottomInset = insets.bottom > 0 ? insets.bottom : 10;
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 14;
   const isDark = colorScheme === 'dark';
+  const activeConfig = getCategoryConfig(activeCategoryKey);
+  const isScrollable = allCategoryKeys.length > 5;
+  const itemWidth = pillWidth > 0 ? Math.floor((pillWidth - 8) / 5) : undefined;
+
+  // Auto reset scroll position to 0 whenever categories change or reset to 5
+  useEffect(() => {
+    if (allCategoryKeys.length <= 5 || activeCategoryKey === 'work' || activeCategoryKey === allCategoryKeys[0]) {
+      scrollViewRef.current?.scrollTo({ x: 0, animated: true });
+    }
+  }, [allCategoryKeys.length, activeCategoryKey, allCategoryKeys]);
 
   const handleSelectTab = React.useCallback(
     (key: string) => {
@@ -63,7 +176,14 @@ const DynamicBottomTabBarComponent: React.FC = () => {
 
   const handleLongPressTab = React.useCallback(
     (key: string, title: string) => {
-      if (!isCustomCategory(key)) return;
+      if (!isCustomCategory(key)) {
+        if (Platform.OS !== 'web') {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        }
+        setEditingCategoryKey(null);
+        setCategoryModalVisible(true);
+        return;
+      }
 
       if (Platform.OS !== 'web') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -88,7 +208,7 @@ const DynamicBottomTabBarComponent: React.FC = () => {
     return () => backSub.remove();
   }, [actionMenuCategory]);
 
-  const handleOpenAddModal = React.useCallback(() => {
+  const handleOpenAddCategory = React.useCallback(() => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -98,8 +218,54 @@ const DynamicBottomTabBarComponent: React.FC = () => {
 
   return (
     <>
-      <View style={styles.outerWrapper}>
-        {/* Elevated Floating + Action Button in Center */}
+      <View style={[styles.outerWrapper, { bottom: bottomInset }]}>
+        {/* Concept B: Split Floating Dock - Exactly 5 Visible Tabs per View */}
+        <View
+          onLayout={(e) => {
+            const w = e.nativeEvent.layout.width;
+            if (w > 0 && Math.abs(w - pillWidth) > 1) {
+              setPillWidth(w);
+            }
+          }}
+          style={[
+            styles.leftPillContainer,
+            {
+              backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+              borderColor: isDark ? 'rgba(51, 65, 85, 0.6)' : 'rgba(226, 232, 240, 0.9)',
+              borderWidth: 1,
+              shadowColor: isDark ? '#000000' : '#64748B',
+            },
+          ]}>
+          <ScrollView
+            ref={scrollViewRef}
+            horizontal
+            scrollEnabled={isScrollable}
+            showsHorizontalScrollIndicator={false}
+            bounces={isScrollable}
+            overScrollMode="never"
+            contentContainerStyle={styles.scrollContent}>
+            {allCategoryKeys.map((key) => {
+              const conf = getCategoryConfig(key);
+              const isFocused = activeCategoryKey === key;
+              const isCustom = isCustomCategory(key);
+
+              return (
+                <DockTabItem
+                  key={key}
+                  conf={conf}
+                  isFocused={isFocused}
+                  isCustom={isCustom}
+                  isDark={isDark}
+                  itemWidth={itemWidth}
+                  onPress={() => handleSelectTab(key)}
+                  onLongPress={() => handleLongPressTab(key, conf.tabLabel)}
+                />
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* Concept B: Split Floating Dock - Right Detached FAB */}
         <TouchableOpacity
           activeOpacity={0.88}
           onPress={() => {
@@ -108,116 +274,20 @@ const DynamicBottomTabBarComponent: React.FC = () => {
             }
             triggerOpenAddModal();
           }}
+          onLongPress={handleOpenAddCategory}
+          delayLongPress={350}
           style={[
-            styles.centerFabTouchable,
-            {
-              shadowColor: activeConfig.color,
-            },
+            styles.rightFabTouchable,
+            { shadowColor: activeConfig.color },
           ]}>
           <LinearGradient
             colors={activeConfig.gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={[
-              styles.centerFabGradient,
-              {
-                borderColor: isDark ? '#0F172A' : '#F1F5F9',
-              },
-            ]}>
-            <Ionicons name="add" size={28} color="#FFFFFF" />
+            style={styles.rightFabGradient}>
+            <Ionicons name="add" size={26} color="#FFFFFF" />
           </LinearGradient>
         </TouchableOpacity>
-
-        {/* Floating Bottom Tab Bar Card (Calendar Rounded Corners) */}
-        <View
-          style={[
-            styles.container,
-            {
-              backgroundColor: isDark ? '#1E293B' : 'rgba(255, 255, 255, 0.96)',
-              borderColor: isDark ? '#334155' : 'rgba(255, 255, 255, 0.90)',
-              shadowColor: isDark ? '#000000' : '#64748B',
-              marginBottom: bottomInset,
-            },
-          ]}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}>
-            {allCategoryKeys.map((key) => {
-              const conf = getCategoryConfig(key);
-              const isFocused = activeCategoryKey === key;
-              const isCustom = isCustomCategory(key);
-
-              return (
-                <TouchableOpacity
-                  key={key}
-                  activeOpacity={0.85}
-                  onPress={() => handleSelectTab(key)}
-                  onLongPress={() => handleLongPressTab(key, conf.tabLabel)}
-                  delayLongPress={350}
-                  style={styles.tabItem}>
-                  {isFocused ? (
-                    <LinearGradient
-                      colors={conf.gradient}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={[styles.focusedIconWrapper, { shadowColor: conf.color }]}>
-                      {isCustom ? (
-                        <Text style={styles.tabEmoji}>{conf.emoji}</Text>
-                      ) : (
-                        <Ionicons name={conf.activeIconName} size={19} color="#FFFFFF" />
-                      )}
-                    </LinearGradient>
-                  ) : (
-                    <View style={styles.inactiveIconWrapper}>
-                      {isCustom ? (
-                        <Text style={[styles.tabEmoji, { opacity: 0.65 }]}>{conf.emoji}</Text>
-                      ) : (
-                        <Ionicons
-                          name={conf.iconName}
-                          size={19}
-                          color={isDark ? '#64748B' : '#94A3B8'}
-                        />
-                      )}
-                    </View>
-                  )}
-                  <Text
-                    style={[
-                      styles.tabLabel,
-                      {
-                        color: isFocused ? conf.color : isDark ? '#64748B' : '#94A3B8',
-                      },
-                    ]}
-                    numberOfLines={1}>
-                    {conf.tabLabel}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-
-            {/* Seamless Minimal + New Category Tab */}
-            <TouchableOpacity
-              activeOpacity={0.75}
-              onPress={handleOpenAddModal}
-              style={styles.tabItem}>
-              <View style={styles.inactiveIconWrapper}>
-                <Ionicons
-                  name="add"
-                  size={20}
-                  color={isDark ? '#64748B' : '#94A3B8'}
-                />
-              </View>
-              <Text
-                style={[
-                  styles.tabLabel,
-                  { color: isDark ? '#64748B' : '#94A3B8' },
-                ]}
-                numberOfLines={1}>
-                New
-              </Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
       </View>
 
       {/* Category Manager Modal */}
@@ -381,89 +451,69 @@ const DynamicBottomTabBarComponent: React.FC = () => {
 const styles = StyleSheet.create({
   outerWrapper: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    left: 12,
+    right: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     zIndex: 100,
+    gap: 10,
   },
-  centerFabTouchable: {
-    position: 'absolute',
-    top: -24,
-    alignSelf: 'center',
-    zIndex: 110,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45,
+  leftPillContainer: {
+    flex: 1,
+    borderRadius: 9999,
+    borderWidth: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    overflow: 'hidden',
+    justifyContent: 'center',
+  },
+  scrollContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 0,
+  },
+  tabItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 1,
+  },
+  iconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  tabEmoji: {
+    fontSize: 15,
+    textAlign: 'center',
+  },
+  tabLabel: {
+    fontSize: 9,
+    marginTop: 1.5,
+    textAlign: 'center',
+  },
+  rightFabTouchable: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
     shadowRadius: 10,
     elevation: 10,
   },
-  centerFabGradient: {
+  rightFabGradient: {
     width: 52,
     height: 52,
     borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 3,
-  },
-  container: {
-    marginHorizontal: 16,
-    width: '92%',
-    borderRadius: 36,
-    borderWidth: 1.2,
-    paddingTop: 8,
-    paddingBottom: 8,
-    paddingHorizontal: 4,
-    elevation: 8,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-  },
-  scrollContent: {
-    paddingHorizontal: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    minWidth: '100%',
-    gap: 2,
-  },
-  tabItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 3,
-    minWidth: 48,
-    paddingVertical: 2,
-  },
-  focusedIconWrapper: {
-    width: 44,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.2,
-    borderColor: 'rgba(255, 255, 255, 0.45)',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  inactiveIconWrapper: {
-    width: 44,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.2,
-    borderColor: 'transparent',
-  },
-  tabEmoji: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  tabLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    marginTop: 3,
-    textAlign: 'center',
   },
   actionBackdrop: {
     flex: 1,
@@ -553,4 +603,9 @@ const styles = StyleSheet.create({
 });
 
 export const DynamicBottomTabBar = React.memo(DynamicBottomTabBarComponent);
+
+
+
+
+
 

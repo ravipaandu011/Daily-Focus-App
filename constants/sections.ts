@@ -1,4 +1,4 @@
-import { SectionKey } from '@/types/todo';
+﻿import { SectionKey } from '@/types/todo';
 import { ComponentProps } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -23,22 +23,22 @@ export const SECTIONS: Record<SectionKey, SectionConfig> = {
     title: 'Work Todo',
     emoji: '💼',
     tabLabel: 'Work',
-    color: '#7C3AED',
-    gradient: ['#6366F1', '#A855F7'], // Indigo to Bright Purple
-    lightBg: '#F5F3FF',
-    accentColor: '#6D28D9',
+    color: '#3F90C0',
+    gradient: ['#3F90C0', '#283582'], // Cerulean Steel Blue to Deep Midnight Navy
+    lightBg: '#F0F6FA',
+    accentColor: '#283582',
     iconName: 'briefcase-outline',
     activeIconName: 'briefcase',
   },
   education: {
     key: 'education',
     title: 'Learn Todo',
-    emoji: '📚',
+    emoji: '📖',
     tabLabel: 'Learn',
-    color: '#9333EA',
-    gradient: ['#7C3AED', '#C026D3'], // Violet to Neon Fuchsia
-    lightBg: '#FAF5FF',
-    accentColor: '#7E22CE',
+    color: '#E63444',
+    gradient: ['#E63444', '#6950EC'], // Crimson Scarlet to Electric Indigo
+    lightBg: '#FEF2F2',
+    accentColor: '#6950EC',
     iconName: 'book-outline',
     activeIconName: 'book',
   },
@@ -47,10 +47,10 @@ export const SECTIONS: Record<SectionKey, SectionConfig> = {
     title: 'Gym Todo',
     emoji: '🏋️',
     tabLabel: 'Gym',
-    color: '#D946EF',
-    gradient: ['#C026D3', '#F43F5E'], // Magenta to Rose Coral
-    lightBg: '#FDF2F8',
-    accentColor: '#BE185D',
+    color: '#707AAD',
+    gradient: ['#DAA3D1', '#004982'], // Soft Lavender Rose to Deep Ocean Navy
+    lightBg: '#F5F3FF',
+    accentColor: '#004982',
     iconName: 'barbell-outline',
     activeIconName: 'barbell',
   },
@@ -59,22 +59,22 @@ export const SECTIONS: Record<SectionKey, SectionConfig> = {
     title: 'Home Todo',
     emoji: '🏠',
     tabLabel: 'Home',
-    color: '#EA580C',
-    gradient: ['#F43F5E', '#F97316'], // Rose to Sunset Orange
-    lightBg: '#FFF7ED',
-    accentColor: '#C2410C',
+    color: '#00E0AB',
+    gradient: ['#00E0AB', '#002E9C'], // Neon Mint Seafoam to Deep Ocean Cobalt
+    lightBg: '#F0FDF9',
+    accentColor: '#002E9C',
     iconName: 'home-outline',
     activeIconName: 'home',
   },
   personal: {
     key: 'personal',
     title: 'Personal Todo',
-    emoji: '🎯',
+    emoji: '✨',
     tabLabel: 'Personal',
-    color: '#F59E0B',
-    gradient: ['#F97316', '#FBBF24'], // Sunset Orange to Radiant Gold
-    lightBg: '#FFFBEB',
-    accentColor: '#B45309',
+    color: '#FFA057',
+    gradient: ['#0A39E0', '#FE6409'], // Electric Cobalt Blue to Flame Sunset
+    lightBg: '#F0F4FF',
+    accentColor: '#0A39E0',
     iconName: 'sparkles-outline',
     activeIconName: 'sparkles',
   },
@@ -87,3 +87,9 @@ export const SECTION_KEYS: SectionKey[] = [
   'home',
   'personal',
 ];
+
+
+
+
+
+
