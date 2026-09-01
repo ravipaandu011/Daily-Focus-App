@@ -170,48 +170,86 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
   const isChecked = Boolean(item.completed);
 
   return (
-    <Animated.View style={[{ transform: [{ scale: scaleAnim }] }]}>
-      <TouchableOpacity
-        activeOpacity={0.88}
-        onPress={handleCardPress}
-        onLongPress={handleCardLongPress}
-        delayLongPress={220}
-        style={[
-          styles.wrapper,
-          item.completed && styles.completedContainer,
-          isDragging && [
-            styles.draggingWrapper,
-            { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }
-          ],
-          {
-            backgroundColor: isSelected
-              ? (isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.08)')
-              : 'transparent',
-          }
-        ]}>
+    <Animated.View
+      {...(isReorderMode ? panResponder.panHandlers : {})}
+      style={[
+        { transform: [{ scale: scaleAnim }] },
+        isReorderMode && { zIndex: isDragging ? 999 : 1 },
+      ]}>
+      {isReorderMode ? (
         <View
           style={[
-            styles.flowContainer,
-            !isLast && {
-              borderBottomWidth: 1,
-              borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.06)', }
+            styles.wrapper,
+            item.completed && styles.completedContainer,
+            isDragging && [
+              styles.draggingWrapper,
+              {
+                backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                borderColor: sectionConfig.color,
+                borderWidth: 1.5,
+              },
+            ],
+            !isDragging && {
+              borderWidth: 1,
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+              borderRadius: 12,
+              marginVertical: 3,
+              backgroundColor: isDark ? 'rgba(30, 41, 59, 0.4)' : 'rgba(241, 245, 249, 0.6)',
+            },
           ]}>
-          {/* Left Vertical Glowing Accent Spine */}
-          <LinearGradient
-            colors={sectionConfig.gradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={[
-              styles.leftAccentSpine,
-              { shadowColor: sectionConfig.color }
-            ]}
-          />
-          {renderCardContent()}
+          <View style={styles.flowContainer}>
+            {/* Left Vertical Glowing Accent Spine */}
+            <LinearGradient
+              colors={sectionConfig.gradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={[
+                styles.leftAccentSpine,
+                { shadowColor: sectionConfig.color },
+              ]}
+            />
+            {renderCardContent()}
+          </View>
         </View>
-      </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          activeOpacity={0.88}
+          onPress={handleCardPress}
+          onLongPress={handleCardLongPress}
+          delayLongPress={220}
+          style={[
+            styles.wrapper,
+            item.completed && styles.completedContainer,
+            {
+              backgroundColor: isSelected
+                ? (isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.08)')
+                : 'transparent',
+            },
+          ]}>
+          <View
+            style={[
+              styles.flowContainer,
+              !isLast && {
+                borderBottomWidth: 1,
+                borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.06)',
+              },
+            ]}>
+            {/* Left Vertical Glowing Accent Spine */}
+            <LinearGradient
+              colors={sectionConfig.gradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={[
+                styles.leftAccentSpine,
+                { shadowColor: sectionConfig.color },
+              ]}
+            />
+            {renderCardContent()}
+          </View>
+        </TouchableOpacity>
+      )}
     </Animated.View>
   );
-
   function renderCardContent() {
     return (
       <View style={styles.cardContent}>
@@ -380,33 +418,6 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
               )}
             </View>
           </View>
-          {/* Drag Handle (Active when Reorder Mode is enabled) */}
-          {isReorderMode && !isSelectionMode && (
-            <View {...panResponder.panHandlers} style={styles.dragHandleTouch}>
-              <View
-                style={[
-                  styles.dragHandlePill,
-                  {
-                    backgroundColor: isDragging
-                      ? sectionConfig.color
-                      : isDark
-                      ? '#1E293B'
-                      : '#F1F5F9',
-                    borderColor: isDragging
-                      ? sectionConfig.color
-                      : isDark
-                      ? 'rgba(51, 65, 85, 0.7)'
-                      : '#CBD5E1',
-                  },
-                ]}>
-                <Ionicons
-                  name="reorder-three"
-                  size={22}
-                  color={isDragging ? '#FFFFFF' : (isDark ? '#94A3B8' : '#64748B')}
-                />
-              </View>
-            </View>
-          )}
         </View>
 
         {/* Micro-Tree Subtask Checklist */}
