@@ -1,11 +1,9 @@
-﻿import '@/utils/suppress-warnings';
+import '@/utils/suppress-warnings';
 import React, { useEffect } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet, Image } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 import 'react-native-reanimated';
 
 import { CustomThemeProvider, useAppTheme } from '@/context/theme-context';
@@ -23,7 +21,7 @@ export const unstable_settings = {
 function RootNavigation() {
   const { colorScheme } = useAppTheme();
   const theme = Colors[colorScheme];
-  const { user, isLoading } = useAuth();
+  const { user, isGuest, isLoading } = useAuth();
 
   useEffect(() => {
     setupNotificationChannel();
@@ -43,8 +41,8 @@ function RootNavigation() {
     );
   }
 
-  // If unauthenticated, gate with the Daily Focus Auth Screen
-  if (!user) {
+  // If unauthenticated and not in guest mode, gate with the Daily Focus Auth Screen
+  if (!user && !isGuest) {
     return (
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <AuthScreen />

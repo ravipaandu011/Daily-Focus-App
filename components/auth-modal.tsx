@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Modal,
   View,
@@ -19,6 +19,7 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuth, SocialProvider } from '@/context/auth-context';
 import { ConfirmDialog } from '@/components/confirm-dialog';
+import { formatAuthErrorMessage } from '@/lib/supabase';
 
 interface AuthModalProps {
   visible: boolean;
@@ -76,7 +77,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
             'Google provider is not enabled yet in Supabase. Please sign in or create an account with Email & Password below.'
           );
         } else {
-          setErrorMessage(error.message || `Failed to sign in with ${provider}`);
+          setErrorMessage(formatAuthErrorMessage(error));
         }
       }
     } else {
@@ -112,7 +113,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
       const { error } = await signUp(trimmedEmail, password, displayName);
       setIsLoading(false);
       if (error) {
-        setErrorMessage(error.message);
+        setErrorMessage(formatAuthErrorMessage(error));
       } else {
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -128,13 +129,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
       const { error } = await signIn(trimmedEmail, password);
       setIsLoading(false);
       if (error) {
-        if (error.message.toLowerCase().includes('email not confirmed')) {
-          setErrorMessage('Email not confirmed yet. Check your inbox or verify your email.');
-        } else if (error.message.toLowerCase().includes('invalid login credentials')) {
-          setErrorMessage('Incorrect email or password. Please try again.');
-        } else {
-          setErrorMessage(error.message);
-        }
+        setErrorMessage(formatAuthErrorMessage(error));
       } else {
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

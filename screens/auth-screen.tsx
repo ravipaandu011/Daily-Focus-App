@@ -1,5 +1,6 @@
-﻿import { Colors } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
 import { SocialProvider, useAuth } from '@/context/auth-context';
+import { formatAuthErrorMessage } from '@/lib/supabase';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -27,7 +28,7 @@ export const AuthScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const isDark = colorScheme === 'dark';
 
-  const { signIn, signUp, signInWithSocial, sendPasswordReset } = useAuth();
+  const { signIn, signUp, signInWithSocial, sendPasswordReset, continueAsGuest } = useAuth();
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [displayName, setDisplayName] = useState('');
@@ -78,18 +79,25 @@ export const AuthScreen: React.FC = () => {
           setNoticeDialog({
             visible: true,
             title: 'Google Sign-In Notice',
-            message: 'Google Sign-In is not enabled yet in your Supabase Auth dashboard.\n\nPlease sign in or create an account using Email & Password below!',
+            message: 'Google Sign-In is not enabled yet in your Supabase Auth dashboard.\n\nPlease sign in or create an account using Email & Password below, or continue in Offline Guest Mode!',
             variant: 'info',
             iconName: 'information-circle',
           });
           setErrorMessage(
-            'Google provider is not enabled yet in Supabase. Please sign in or create an account with Email & Password below.'
+            'Google provider is not enabled yet in Supabase. Please sign in or create an account with Email & Password below, or continue as Guest.'
           );
         } else {
-          setErrorMessage(error.message || `Failed to sign in with ${provider}`);
+          setErrorMessage(formatAuthErrorMessage(error));
         }
       }
     }
+  };
+
+  const handleContinueAsGuest = async () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    await continueAsGuest();
   };
 
   const handleSubmit = async () => {
@@ -120,7 +128,7 @@ export const AuthScreen: React.FC = () => {
       const { error } = await signUp(trimmedEmail, password, displayName);
       setIsLoading(false);
       if (error) {
-        setErrorMessage(error.message);
+        setErrorMessage(formatAuthErrorMessage(error));
       } else {
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -137,13 +145,7 @@ export const AuthScreen: React.FC = () => {
       const { error } = await signIn(trimmedEmail, password);
       setIsLoading(false);
       if (error) {
-        if (error.message.toLowerCase().includes('email not confirmed')) {
-          setErrorMessage('Email not confirmed yet. Check your inbox or verify your email in Supabase Auth.');
-        } else if (error.message.toLowerCase().includes('invalid login credentials')) {
-          setErrorMessage('Incorrect email or password. Please try again.');
-        } else {
-          setErrorMessage(error.message);
-        }
+        setErrorMessage(formatAuthErrorMessage(error));
       } else {
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -163,7 +165,7 @@ export const AuthScreen: React.FC = () => {
     const { error } = await sendPasswordReset(trimmed);
     setIsResetting(false);
     if (error) {
-      setResetError(error.message || 'Failed to send reset link.');
+      setResetError(formatAuthErrorMessage(error));
     } else {
       setResetSuccess(true);
       if (Platform.OS !== 'web') {
@@ -336,8 +338,19 @@ export const AuthScreen: React.FC = () => {
                   borderColor: '#EF4444',
                 },
               ]}>
-              <Ionicons name="alert-circle" size={16} color="#EF4444" />
-              <Text style={styles.errorText}>{errorMessage}</Text>
+              <Ionicons name="alert-circle" size={18} color="#EF4444" style={{ alignSelf: 'flex-start', marginTop: 1 }} />
+              <View style={{ flex: 1, gap: 6 }}>
+                <Text style={styles.errorText}>{errorMessage}</Text>
+                {(errorMessage.toLowerCase().includes('supabase') || errorMessage.toLowerCase().includes('offline')) && (
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={handleContinueAsGuest}
+                    style={styles.errorGuestBtn}>
+                    <Ionicons name="flash" size={12} color="#0284C7" />
+                    <Text style={styles.errorGuestBtnText}>Enter App in Offline Guest Mode</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
           )}
 
@@ -484,6 +497,30 @@ export const AuthScreen: React.FC = () => {
               <Text style={[styles.forgotText, { color: isDark ? '#C084FC' : '#9333EA' }]}>Forgot your password?</Text>
             </TouchableOpacity>
           )}
+
+          {/* Guest Mode Divider */}
+          <View style={styles.dividerRow}>
+            <View style={[styles.dividerLine, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.cardBorder }]} />
+            <Text style={[styles.dividerText, { color: isDark ? '#64748B' : theme.textMuted }]}>OR USE WITHOUT ACCOUNT</Text>
+            <View style={[styles.dividerLine, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.cardBorder }]} />
+          </View>
+
+          {/* Continue as Guest Button */}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={handleContinueAsGuest}
+            style={[
+              styles.guestBtn,
+              {
+                backgroundColor: isDark ? 'rgba(56, 189, 248, 0.08)' : '#F0F9FF',
+                borderColor: isDark ? 'rgba(56, 189, 248, 0.25)' : '#BAE6FD',
+              },
+            ]}>
+            <Ionicons name="sparkles-outline" size={17} color={isDark ? '#38BDF8' : '#0284C7'} />
+            <Text style={[styles.guestBtnText, { color: isDark ? '#38BDF8' : '#0284C7' }]}>
+              Continue as Guest (Offline Mode)
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -898,5 +935,35 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
+  },
+  guestBtn: {
+    height: 48,
+    borderRadius: 9999,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+    gap: 8,
+  },
+  guestBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  errorGuestBtn: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#E0F2FE',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    marginTop: 2,
+  },
+  errorGuestBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#0284C7',
   },
 });

@@ -1,4 +1,4 @@
-﻿import 'react-native-url-polyfill/auto';
+import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
@@ -9,8 +9,10 @@ import * as QueryParams from 'expo-auth-session/build/QueryParams';
 // Ensure browser redirects are properly completed on mobile & web
 WebBrowser.maybeCompleteAuthSession();
 
-const SUPABASE_URL = 'https://sjyncjrviweliwemgjww.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_U-A7l0gVrRjqJG9SOW3JyQ_O6N4jeeS';
+const SUPABASE_URL =
+  process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://sjyncjrviweliwemgjww.supabase.co';
+const SUPABASE_ANON_KEY =
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_U-A7l0gVrRjqJG9SOW3JyQ_O6N4jeeS';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
@@ -20,6 +22,47 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     detectSessionInUrl: Platform.OS === 'web',
   },
 });
+
+/**
+ * Converts Supabase/Network auth error messages into user-friendly explanations.
+ */
+export function formatAuthErrorMessage(error: any): string {
+  if (!error) return 'An unknown error occurred.';
+  const msg = error?.message || String(error || '');
+  const lower = msg.toLowerCase();
+
+  if (
+    lower.includes('fetch failed') ||
+    lower.includes('network request failed') ||
+    lower.includes('enotfound') ||
+    lower.includes('econnrefused') ||
+    error?.name === 'AuthRetryableFetchError'
+  ) {
+    return 'Unable to reach the Supabase backend server. If using a free Supabase project, check if it was paused due to inactivity in your Supabase dashboard (supabase.com/dashboard). You can also use the app offline in Guest Mode.';
+  }
+
+  if (lower.includes('invalid login credentials') || lower.includes('invalid credentials')) {
+    return 'Incorrect email or password. Please verify your credentials or reset your password.';
+  }
+
+  if (lower.includes('email not confirmed')) {
+    return 'Your email has not been confirmed yet. Please check your inbox or confirm your email in Supabase Auth.';
+  }
+
+  if (lower.includes('user already registered') || lower.includes('already exists')) {
+    return 'An account with this email already exists. Please switch to the Sign In tab.';
+  }
+
+  if (lower.includes('password should be at least')) {
+    return 'Password must be at least 6 characters long.';
+  }
+
+  if (lower.includes('rate limit') || lower.includes('too many requests')) {
+    return 'Too many attempts. Please wait a moment and try again.';
+  }
+
+  return msg;
+}
 
 /**
  * Helper to safely extract parameters from URL query strings or hash fragments
