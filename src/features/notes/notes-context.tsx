@@ -8,7 +8,8 @@ import {
   saveNoteBinToStorage,
   saveNotesToStorage,
 } from '@/features/notes/note-storage';
-import { supabase } from '@/lib/supabase';
+import { collection, getDocs, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { usePendingSync } from '@/lib/use-pending-sync';
 import { useAuth } from '@/features/auth/auth-context';
 import { formatDateKey } from '@/utils/date';
@@ -56,18 +57,30 @@ function noteToDbRow(note: NoteItem, userId: string) {
   };
 }
 
+function parseTimestampMs(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const ms = new Date(value).getTime();
+    if (Number.isFinite(ms)) return ms;
+  }
+  if (value && typeof value === 'object' && typeof (value as { toMillis?: () => number }).toMillis === 'function') {
+    return (value as { toMillis: () => number }).toMillis();
+  }
+  return Date.now();
+}
+
 function dbRowToNote(row: any): NoteItem {
-  const createdAt = new Date(row.created_at).getTime();
-  const updatedAt = new Date(row.updated_at).getTime();
+  const createdAt = parseTimestampMs(row.created_at);
+  const updatedAt = parseTimestampMs(row.updated_at);
   return {
     id: String(row.id),
     title: row.title ?? '',
     body: row.body ?? '',
     color: (row.color as NoteColor) ?? 'default',
     pinned: Boolean(row.pinned),
-    createdAt: Number.isFinite(createdAt) ? createdAt : Date.now(),
-    updatedAt: Number.isFinite(updatedAt) ? updatedAt : Date.now(),
-    date: typeof row.date === 'string' && row.date ? row.date : formatDateKey(new Date(Number.isFinite(createdAt) ? createdAt : Date.now())),
+    createdAt,
+    updatedAt,
+    date: typeof row.date === 'string' && row.date ? row.date : formatDateKey(new Date(createdAt)),
   };
 }
 
@@ -76,17 +89,8 @@ function withDate(note: NoteItem): NoteItem {
   return note.date ? note : { ...note, date: formatDateKey(new Date(note.createdAt)) };
 }
 
-function isMissingDateColumnError(error: { code?: string; message?: string } | null): boolean {
-  return Boolean(error && (error.code === 'PGRST204' || error.code === '42703') && /date/i.test(error.message ?? ''));
-}
-
-function isMissingTableError(error: { code?: string; message?: string } | null): boolean {
-  if (!error) return false;
-  return (
-    error.code === '42P01' ||
-    error.code === 'PGRST205' ||
-    /does not exist|could not find the table/i.test(error.message ?? '')
-  );
+function isFirestorePermissionError(error: { code?: string; message?: string } | null): boolean {
+  return Boolean(error && (error.code === 'permission-denied' || /permission/i.test(error.message ?? '')));
 }
 
 function sortNotes(list: NoteItem[]): NoteItem[] {
@@ -117,15 +121,9 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       getItems: () => notesRef.current,
       toRow: noteToDbRow,
       isFatalError: (error) => {
-        if (isMissingDateColumnError(error)) {
+        if (isFirestorePermissionError(error)) {
           console.warn(
-            'Notes cloud sync is off: the Supabase "notes" table has no "date" column yet. Run the notes date migration in supabase/schema.sql. Notes are still saved on this device.'
-          );
-          return true;
-        }
-        if (isMissingTableError(error)) {
-          console.warn(
-            'Notes cloud sync is off: the Supabase "notes" table does not exist yet. Run supabase/schema.sql to enable it. Notes are still saved on this device.'
+            'Notes cloud sync is off: Firestore permission denied. Check your Firestore Security Rules. Notes are still saved on this device.'
           );
           return true;
         }
@@ -148,7 +146,7 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Load notes whenever the signed-in user changes, then keep them in sync.
   useEffect(() => {
     let isActive = true;
-    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let unsubscribeSnapshot: (() => void) | null = null;
     userIdRef.current = userId;
     const pendingLoaded = load(userId);
 
@@ -178,16 +176,13 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       await enqueue(flush);
       if (!isActive || !isEnabled()) return;
 
-      await enqueue(async () => {
-        const { data, error } = await supabase
-          .from('notes')
-          .select('*')
-          .eq('user_id', userId)
-          .order('updated_at', { ascending: false });
-        if (!isActive) return;
-        if (error) throw error;
+      const notesColRef = collection(db, 'users', userId, 'notes');
 
-        const remote = (data ?? []).map(dbRowToNote);
+      await enqueue(async () => {
+        const snapshot = await getDocs(query(notesColRef, orderBy('updated_at', 'desc')));
+        if (!isActive) return;
+
+        const remote = snapshot.docs.map((docSnap) => dbRowToNote({ id: docSnap.id, ...docSnap.data() }));
         const local = notesRef.current;
 
         // Server copy, minus notes deleted here and not yet sent, with local edits not yet sent on top.
@@ -220,30 +215,41 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (!isActive || !isEnabled()) return;
 
       // Live updates from other devices. Notes with unsent local changes keep the local version.
-      channel = supabase
-        .channel(`public:notes:${userId}`)
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'notes', filter: `user_id=eq.${userId}` },
-          (payload) => {
-            if (payload.eventType === 'DELETE') {
-              const deletedId = (payload.old as any)?.id;
-              if (!deletedId || isPendingUpsert(deletedId)) return;
-              if (notesRef.current.some((n) => n.id === deletedId)) {
-                commit(notesRef.current.filter((n) => n.id !== deletedId));
+      unsubscribeSnapshot = onSnapshot(
+        notesColRef,
+        (snapshot) => {
+          if (!isActive) return;
+          let next = notesRef.current;
+          let changed = false;
+
+          for (const change of snapshot.docChanges()) {
+            if (change.type === 'removed') {
+              const deletedId = (change.doc.data()?.id as string | undefined) ?? change.doc.id;
+              if (!deletedId || isPendingUpsert(deletedId)) continue;
+              if (next.some((n) => n.id === deletedId)) {
+                next = next.filter((n) => n.id !== deletedId);
+                changed = true;
               }
-              return;
+              continue;
             }
-            const incoming = dbRowToNote(payload.new);
-            if (isPendingUpsert(incoming.id) || isPendingDelete(incoming.id)) return;
-            if (binRef.current.some((n) => n.id === incoming.id)) return;
-            const existing = notesRef.current.find((n) => n.id === incoming.id);
-            if (existing && existing.updatedAt >= incoming.updatedAt) return; // our own echo or stale
-            const rest = notesRef.current.filter((n) => n.id !== incoming.id);
-            commit(sortNotes([incoming, ...rest]));
+
+            const incoming = dbRowToNote({ id: change.doc.id, ...change.doc.data() });
+            if (isPendingUpsert(incoming.id) || isPendingDelete(incoming.id)) continue;
+            if (binRef.current.some((n) => n.id === incoming.id)) continue;
+            const existing = next.find((n) => n.id === incoming.id);
+            if (existing && existing.updatedAt >= incoming.updatedAt) continue; // our own echo or stale
+            next = [incoming, ...next.filter((n) => n.id !== incoming.id)];
+            changed = true;
           }
-        )
-        .subscribe();
+
+          if (changed) {
+            commit(sortNotes(next));
+          }
+        },
+        (error) => {
+          console.warn('Notes realtime sync error:', error);
+        }
+      );
     })().catch((e) => {
       console.warn('Notes: failed to load notes:', e);
       if (isActive) setIsLoading(false);
@@ -251,7 +257,7 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     return () => {
       isActive = false;
-      if (channel) supabase.removeChannel(channel);
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
     };
   }, [userId, commit, commitBin, load, enqueue, flush, markChanged, isPendingUpsert, isPendingDelete, isEnabled]);
 

@@ -81,14 +81,7 @@ export const AuthScreen: React.FC = () => {
     setIsLoading(false);
 
     if (error) {
-      const message = error.message.toLowerCase();
-      if (message.includes('email not confirmed')) {
-        setErrorMessage('Email not confirmed yet. Open the confirmation link we emailed you, then sign in.');
-      } else if (message.includes('invalid login credentials')) {
-        setErrorMessage('Incorrect email or password. Please try again.');
-      } else {
-        setErrorMessage(error.message);
-      }
+      setErrorMessage(error.message);
       return;
     }
 

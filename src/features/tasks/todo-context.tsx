@@ -10,7 +10,8 @@ import {
   saveBinToStorage,
 } from '@/features/tasks/todo-storage';
 import { getTodayKey } from '@/utils/date';
-import { supabase } from '@/lib/supabase';
+import { collection, getDocs, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { usePendingSync } from '@/lib/use-pending-sync';
 import { useAuth } from '@/features/auth/auth-context';
 
@@ -74,7 +75,7 @@ const TodoContext = createContext<TodoContextType | undefined>(undefined);
 const pendingKey = (userId: string) => `@personal_todo_user_${userId}_pending_v1`;
 const syncedKey = (userId: string) => `@personal_todo_user_${userId}_synced_v1`;
 
-// TodoItem -> Supabase row (ISO timestamp for PostgreSQL timestamptz)
+// TodoItem -> Firestore document fields
 function todoToDbRow(item: TodoItem, userId: string) {
   return {
     id: String(item.id),
@@ -92,7 +93,7 @@ function todoToDbRow(item: TodoItem, userId: string) {
   };
 }
 
-// Supabase row -> TodoItem
+// Firestore document -> TodoItem
 function dbRowToTodo(row: any): TodoItem {
   let parsedSubtasks: SubtaskItem[] | undefined;
   if (row.subtasks) {
@@ -109,6 +110,8 @@ function dbRowToTodo(row: any): TodoItem {
   } else if (typeof row.created_at === 'string') {
     const timeVal = new Date(row.created_at).getTime();
     if (!isNaN(timeVal)) parsedCreatedAt = timeVal;
+  } else if (row.created_at && typeof row.created_at.toMillis === 'function') {
+    parsedCreatedAt = row.created_at.toMillis();
   }
 
   return {
@@ -124,6 +127,22 @@ function dbRowToTodo(row: any): TodoItem {
     subtasks: parsedSubtasks && parsedSubtasks.length > 0 ? parsedSubtasks : undefined,
     notes: row.notes || undefined,
   };
+}
+
+function todosEqual(a: TodoItem, b: TodoItem): boolean {
+  return (
+    a.id === b.id &&
+    a.text === b.text &&
+    a.completed === b.completed &&
+    a.createdAt === b.createdAt &&
+    a.section === b.section &&
+    a.date === b.date &&
+    Boolean(a.pinned) === Boolean(b.pinned) &&
+    a.priority === b.priority &&
+    a.tag === b.tag &&
+    a.notes === b.notes &&
+    JSON.stringify(a.subtasks ?? null) === JSON.stringify(b.subtasks ?? null)
+  );
 }
 
 function newId(suffix = ''): string {
@@ -152,13 +171,23 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const todosRef = useRef<TodoItem[]>([]);
   const binRef = useRef<TodoItem[]>([]);
   const userIdRef = useRef<string | null>(null);
-  const { load, enqueue, flush, scheduleFlush, markChanged, isPendingUpsert, isPendingDelete } = usePendingSync<TodoItem>({
-    table: 'todos',
-    label: 'Tasks',
-    storageKey: pendingKey,
-    getItems: () => todosRef.current,
-    toRow: todoToDbRow,
-  });
+  const { load, enqueue, flush, scheduleFlush, markChanged, isPendingUpsert, isPendingDelete, isEnabled } =
+    usePendingSync<TodoItem>({
+      table: 'todos',
+      label: 'Tasks',
+      storageKey: pendingKey,
+      getItems: () => todosRef.current,
+      toRow: todoToDbRow,
+      isFatalError: (error) => {
+        if (error.code === 'permission-denied' || /permission/i.test(error.message ?? '')) {
+          console.warn(
+            'Tasks cloud sync is off: Firestore permission denied. Check your Firestore Security Rules. Tasks are still saved on this device.'
+          );
+          return true;
+        }
+        return false;
+      },
+    });
 
   const commitTodos = useCallback((next: TodoItem[], persist = true) => {
     todosRef.current = next;
@@ -175,7 +204,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Load tasks whenever the signed-in user changes, then keep them in sync.
   useEffect(() => {
     let isActive = true;
-    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let unsubscribeSnapshot: (() => void) | null = null;
     userIdRef.current = userId;
     const pendingLoaded = load(userId);
 
@@ -203,18 +232,15 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Send waiting changes first, then fetch, so the server list already includes them.
       await enqueue(flush);
-      if (!isActive) return;
+      if (!isActive || !isEnabled()) return;
+
+      const todosColRef = collection(db, 'users', userId, 'todos');
 
       await enqueue(async () => {
-        const { data, error } = await supabase
-          .from('todos')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false });
+        const snapshot = await getDocs(query(todosColRef, orderBy('created_at', 'desc')));
         if (!isActive) return;
-        if (error) throw error;
 
-        const remote = (data ?? []).map(dbRowToTodo);
+        const remote = snapshot.docs.map((docSnap) => dbRowToTodo({ id: docSnap.id, ...docSnap.data() }));
         const remoteIds = new Set(remote.map((t) => t.id));
         const local = todosRef.current;
 
@@ -242,33 +268,46 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
         markChanged(toUpload);
         await AsyncStorage.setItem(syncedKey(userId), '1');
       });
-      if (!isActive) return;
+      if (!isActive || !isEnabled()) return;
 
       // Live updates from other devices. Tasks with unsent local changes keep the local version.
-      channel = supabase
-        .channel(`public:todos:${userId}`)
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'todos', filter: `user_id=eq.${userId}` },
-          (payload) => {
-            if (payload.eventType === 'DELETE') {
-              const deletedId = (payload.old as any)?.id;
-              if (!deletedId || isPendingUpsert(deletedId)) return;
-              if (todosRef.current.some((t) => t.id === deletedId)) {
-                commitTodos(todosRef.current.filter((t) => t.id !== deletedId));
+      unsubscribeSnapshot = onSnapshot(
+        todosColRef,
+        (snapshot) => {
+          if (!isActive) return;
+          let next = todosRef.current;
+          let changed = false;
+
+          for (const change of snapshot.docChanges()) {
+            if (change.type === 'removed') {
+              const deletedId = (change.doc.data()?.id as string | undefined) ?? change.doc.id;
+              if (!deletedId || isPendingUpsert(deletedId)) continue;
+              if (next.some((t) => t.id === deletedId)) {
+                next = next.filter((t) => t.id !== deletedId);
+                changed = true;
               }
-              return;
+              continue;
             }
-            const incoming = dbRowToTodo(payload.new);
-            if (isPendingUpsert(incoming.id) || isPendingDelete(incoming.id)) return;
-            if (binRef.current.some((t) => t.id === incoming.id)) return;
-            const exists = todosRef.current.some((t) => t.id === incoming.id);
-            commitTodos(
-              exists ? todosRef.current.map((t) => (t.id === incoming.id ? incoming : t)) : [incoming, ...todosRef.current]
-            );
+
+            const incoming = dbRowToTodo({ id: change.doc.id, ...change.doc.data() });
+            if (isPendingUpsert(incoming.id) || isPendingDelete(incoming.id)) continue;
+            if (binRef.current.some((t) => t.id === incoming.id)) continue;
+            const existing = next.find((t) => t.id === incoming.id);
+            if (existing && todosEqual(existing, incoming)) continue;
+            next = existing
+              ? next.map((t) => (t.id === incoming.id ? incoming : t))
+              : [incoming, ...next];
+            changed = true;
           }
-        )
-        .subscribe();
+
+          if (changed) {
+            commitTodos(next);
+          }
+        },
+        (error) => {
+          console.warn('Tasks realtime sync error:', error);
+        }
+      );
     })().catch((e) => {
       console.warn('Tasks: failed to load tasks:', e);
       if (isActive) setIsLoading(false);
@@ -276,9 +315,9 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       isActive = false;
-      if (channel) supabase.removeChannel(channel);
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
     };
-  }, [userId, commitTodos, commitBin, load, enqueue, flush, markChanged, isPendingUpsert, isPendingDelete]);
+  }, [userId, commitTodos, commitBin, load, enqueue, flush, markChanged, isPendingUpsert, isPendingDelete, isEnabled]);
 
   // Coming back to the app: retry unsent changes, and move "today" forward if the day changed.
   useEffect(() => {

@@ -1,6 +1,9 @@
 import { useCallback, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '@/lib/supabase';
+import { collection, doc, writeBatch } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
+const MAX_FIRESTORE_BATCH_OPS = 450;
 
 /** Changes not yet confirmed by the server, as stored on the device. */
 interface StoredPending {
@@ -9,7 +12,7 @@ interface StoredPending {
 }
 
 interface PendingSyncOptions<T extends { id: string }> {
-  /** Supabase table, e.g. 'todos'. */
+  /** Firestore user subcollection name, e.g. 'todos'. */
   table: string;
   /** Label used in log messages, e.g. 'Tasks'. */
   label: string;
@@ -17,13 +20,17 @@ interface PendingSyncOptions<T extends { id: string }> {
   storageKey: (userId: string) => string;
   /** The latest local items (read when sending, so the newest version goes out). */
   getItems: () => T[];
-  toRow: (item: T, userId: string) => object;
-  /** Return true for errors that mean "cloud sync cannot work" (e.g. a missing table): sending stops until the next load. */
+  toRow: (item: T, userId: string) => Record<string, unknown>;
+  /** Return true for errors that mean "cloud sync cannot work": sending stops until the next load. */
   isFatalError?: (error: { code?: string; message?: string }) => boolean;
 }
 
+function safeDocId(id: string): string {
+  return String(id).replace(/\//g, '_');
+}
+
 /**
- * Keeps local changes in a queue until Supabase confirms them, so nothing is lost offline or on failure.
+ * Keeps local changes in a queue until Firestore confirms them, so nothing is lost offline or on failure.
  *
  * - `markChanged(saved, deleted)` records changes and sends them soon (several quick changes go out together).
  * - Unsent changes are saved on the device and retried by `load` + `flush` on the next start.
@@ -83,7 +90,7 @@ export function usePendingSync<T extends { id: string }>(options: PendingSyncOpt
     return run;
   }, []);
 
-  /** Sends all pending changes now. Failed ones stay pending. Throws the Supabase error on failure. */
+  /** Sends all pending changes now. Failed ones stay pending. Throws the Firestore error on failure. */
   const flush = useCallback(async () => {
     const uid = userIdRef.current;
     if (!uid || !enabledRef.current) return;
@@ -92,24 +99,41 @@ export function usePendingSync<T extends { id: string }>(options: PendingSyncOpt
     const deletes = new Map(deletesRef.current);
     if (upserts.size === 0 && deletes.size === 0) return;
 
+    const colRef = collection(db, 'users', uid, table);
+
     if (deletes.size > 0) {
-      const { error } = await supabase.from(table).delete().eq('user_id', uid).in('id', [...deletes.keys()]);
-      if (error) throw error;
-      deletes.forEach((n, id) => {
-        if (deletesRef.current.get(id) === n) deletesRef.current.delete(id);
-      });
+      const deleteIds = [...deletes.keys()];
+      for (let i = 0; i < deleteIds.length; i += MAX_FIRESTORE_BATCH_OPS) {
+        const chunk = deleteIds.slice(i, i + MAX_FIRESTORE_BATCH_OPS);
+        const batch = writeBatch(db);
+        chunk.forEach((id) => batch.delete(doc(colRef, safeDocId(id))));
+        await batch.commit();
+        chunk.forEach((id) => {
+          const n = deletes.get(id);
+          if (deletesRef.current.get(id) === n) deletesRef.current.delete(id);
+        });
+      }
     }
 
     if (upserts.size > 0) {
-      const rows = getItems()
-        .filter((item) => upserts.has(item.id))
-        .map((item) => toRow(item, uid));
-      if (rows.length > 0) {
-        const { error } = await supabase.from(table).upsert(rows);
-        if (error) throw error;
+      const itemsToWrite = getItems().filter((item) => upserts.has(item.id));
+      for (let i = 0; i < itemsToWrite.length; i += MAX_FIRESTORE_BATCH_OPS) {
+        const chunk = itemsToWrite.slice(i, i + MAX_FIRESTORE_BATCH_OPS);
+        const batch = writeBatch(db);
+        chunk.forEach((item) => {
+          batch.set(doc(colRef, safeDocId(item.id)), toRow(item, uid), { merge: true });
+        });
+        await batch.commit();
+        chunk.forEach((item) => {
+          const n = upserts.get(item.id);
+          if (upsertsRef.current.get(item.id) === n) upsertsRef.current.delete(item.id);
+        });
       }
+      // Clear any remaining pending upserts whose items no longer exist locally.
       upserts.forEach((n, id) => {
-        if (upsertsRef.current.get(id) === n) upsertsRef.current.delete(id);
+        if (!itemsToWrite.some((item) => item.id === id) && upsertsRef.current.get(id) === n) {
+          upsertsRef.current.delete(id);
+        }
       });
     }
 

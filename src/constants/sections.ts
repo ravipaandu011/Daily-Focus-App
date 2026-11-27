@@ -23,8 +23,8 @@ export interface SectionConfig {
 }
 
 /**
- * The app has a single Todo list. Tasks still carry a `section` value because the
- * Supabase `todos.section` column is NOT NULL, but the app no longer groups by it.
+ * The app has a single Todo list. Tasks still carry a `section` value for backward
+ * compatibility with existing JSON backups and stored documents, though the app no longer groups by it.
  */
 export const TODO_SECTION_KEY: SectionKey = 'todo';
 

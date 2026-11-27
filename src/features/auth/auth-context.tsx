@@ -1,12 +1,24 @@
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import * as Linking from 'expo-linking';
-import { supabase, sendPasswordResetEmail, createSessionFromUrl } from '@/lib/supabase';
+import {
+  User as FirebaseUser,
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  updateProfile,
+} from 'firebase/auth';
+import { auth, mapFirebaseAuthError, sendPasswordResetEmail } from '@/lib/firebase';
 import { removeGuestData } from '@/utils/remove-guest-data';
 
+export interface AppUser {
+  id: string;
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+}
+
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: AppUser | null;
   isLoading: boolean;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -16,126 +28,109 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function toAppUser(fbUser: FirebaseUser | null): AppUser | null {
+  if (!fbUser) return null;
+  return {
+    id: fbUser.uid,
+    uid: fbUser.uid,
+    email: fbUser.email,
+    displayName: fbUser.displayName,
+  };
+}
+
 /** Keeps the same user object when only the token was refreshed, so screens don't reload. */
-function sameUser(prev: User | null, next: User | null): User | null {
-  if (prev && next && prev.id === next.id && prev.updated_at === next.updated_at) return prev;
+function sameUser(prev: AppUser | null, next: AppUser | null): AppUser | null {
+  if (
+    prev &&
+    next &&
+    prev.id === next.id &&
+    prev.email === next.email &&
+    prev.displayName === next.displayName
+  ) {
+    return prev;
+  }
   return next;
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   // While signing up, auth events are ignored: a new account is not signed in automatically.
   const isSigningUpRef = useRef(false);
 
-  const applySession = useCallback((next: Session | null) => {
-    setSession(next);
-    setUser((prev) => sameUser(prev, next?.user ?? null));
+  const applyUser = useCallback((next: AppUser | null) => {
+    setUser((prev) => sameUser(prev, next));
   }, []);
 
-  // Restore the saved session, then follow sign-in / sign-out / token refresh.
+  // Restore the persisted Firebase session, then follow sign-in / sign-out / token refresh.
   useEffect(() => {
     let isMounted = true;
     removeGuestData(); // leftovers from the old guest mode
 
-    supabase.auth
-      .getSession()
-      .then(({ data }) => {
-        if (isMounted) applySession(data.session);
-      })
-      .catch((e) => console.error('Error fetching auth session', e))
-      .finally(() => {
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (fbUser) => {
+        if (!isMounted || isSigningUpRef.current) return;
+        applyUser(toAppUser(fbUser));
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error('Error observing Firebase auth state', error);
         if (isMounted) setIsLoading(false);
-      });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      if (!isMounted || isSigningUpRef.current) return;
-      applySession(newSession);
-      setIsLoading(false);
-    });
+      }
+    );
 
     return () => {
       isMounted = false;
-      subscription.unsubscribe();
+      unsubscribe();
     };
-  }, [applySession]);
+  }, [applyUser]);
 
-  // Password-reset links from email (PKCE ?code=...). Links carrying raw tokens are ignored.
-  useEffect(() => {
-    const handleDeepLink = async ({ url }: { url: string }) => {
-      if (!url || !url.includes('code=')) return;
-      try {
-        const { data, error } = await createSessionFromUrl(url);
-        if (!error && data?.session) applySession(data.session);
-      } catch (err) {
-        console.error('Error handling auth deep link:', err);
+  const signUp = useCallback(async (email: string, password: string, displayName?: string) => {
+    isSigningUpRef.current = true;
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      const name = displayName?.trim();
+      if (name) {
+        await updateProfile(credential.user, { displayName: name });
       }
-    };
-
-    const linkSubscription = Linking.addEventListener('url', handleDeepLink);
-    Linking.getInitialURL().then((initialUrl) => {
-      if (initialUrl) handleDeepLink({ url: initialUrl });
-    });
-
-    return () => linkSubscription.remove();
-  }, [applySession]);
-
-
-  const signUp = useCallback(
-    async (email: string, password: string, displayName?: string) => {
-      isSigningUpRef.current = true;
-      try {
-        const name = displayName?.trim();
-        const { data, error } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
-          options: name ? { data: { full_name: name, display_name: name } } : {},
-        });
-        if (error) return { error };
-        // The user signs in themselves afterwards, so drop any session sign-up created.
-        if (data.session) await supabase.auth.signOut({ scope: 'local' });
-        return { error: null };
-      } catch (e: any) {
-        return { error: e };
-      } finally {
-        isSigningUpRef.current = false;
-      }
-    },
-    []
-  );
+      // The user signs in themselves afterwards, so drop the session sign-up created.
+      await firebaseSignOut(auth);
+      return { error: null };
+    } catch (err) {
+      return { error: mapFirebaseAuthError(err) };
+    } finally {
+      isSigningUpRef.current = false;
+    }
+  }, []);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-        if (error) return { error };
-        applySession(data.session);
+        const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
+        applyUser(toAppUser(credential.user));
         return { error: null };
-      } catch (e: any) {
-        return { error: e };
+      } catch (err) {
+        return { error: mapFirebaseAuthError(err) };
       }
     },
-    [applySession]
+    [applyUser]
   );
-
 
   const sendPasswordReset = useCallback((email: string) => sendPasswordResetEmail(email), []);
 
   const signOut = useCallback(async () => {
     try {
-      await supabase.auth.signOut();
+      await firebaseSignOut(auth);
     } catch (e) {
       console.error('Sign out error', e);
     }
-    applySession(null);
-  }, [applySession]);
+    applyUser(null);
+  }, [applyUser]);
 
   const value = useMemo(
-    () => ({ user, session, isLoading, signUp, signIn, sendPasswordReset, signOut }),
-    [user, session, isLoading, signUp, signIn, sendPasswordReset, signOut]
+    () => ({ user, isLoading, signUp, signIn, sendPasswordReset, signOut }),
+    [user, isLoading, signUp, signIn, sendPasswordReset, signOut]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -360,7 +360,7 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
                     { color: theme.textSecondary },
                   ]}
                 >
-                  Supabase PostgreSQL Realtime Sync Active
+                  Firebase Cloud Firestore Realtime Sync Active
                 </Text>
 
                 <TouchableOpacity

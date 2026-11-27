@@ -33,7 +33,7 @@ A daily planner for Android: plan your tasks day by day and keep a notes journal
 
 ## For developers
 
-Built with [Expo](https://expo.dev) (React Native, TypeScript) and [Supabase](https://supabase.com) for sign-in and sync.
+Built with [Expo](https://expo.dev) (React Native, TypeScript) and [Firebase](https://firebase.google.com) (Auth & Cloud Firestore) for sign-in and sync.
 
 ### Run the app
 
@@ -42,11 +42,11 @@ npm install
 npx expo run:android
 ```
 
-### Use your own Supabase project
+### Use your own Firebase project
 
-1. Create a Supabase project and run [`supabase/schema.sql`](supabase/schema.sql) in its SQL Editor. This creates the `todos` and `notes` tables with row-level security.
-2. Put your project URL and publishable key in [`src/lib/supabase.ts`](src/lib/supabase.ts).
-3. In Authentication → Sign In / Providers → Email, keep sign-ups on and turn off "Confirm email".
+1. Create a free Spark-plan project in the Firebase Console, enable **Authentication -> Email/Password**, and create a **Cloud Firestore** database.
+2. Publish user-scoped Firestore Security Rules allowing `users/{userId}/{collection}/{docId}` access only when `request.auth != null && request.auth.uid == userId`.
+3. Put your web app `firebaseConfig` in [`src/lib/firebase.ts`](src/lib/firebase.ts).
 
 ### Build the APK
 
@@ -74,8 +74,7 @@ src/
     auth/       Sign-in / sign-up screen and auth context
     settings/   Settings, backup and the Recycle Bin
   components/   Shared UI (header, calendar, dialogs, tab bar)
-  lib/          Supabase client and the offline sync queue
+  lib/          Firebase client and the offline sync queue
   utils/        Dates, reminders and helpers
 plugins/        Expo config plugins
-supabase/       Database schema
 ```
