@@ -32,6 +32,60 @@ import {
 
 const GRADIENT_COLORS: [string, string] = ['#7C3AED', '#2563EB'];
 
+/** Renders **bold** spans inside a line. */
+function renderInline(text: string, boldColor: string): React.ReactNode[] {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith('**') && part.endsWith('**') && part.length > 4 ? (
+      <Text key={i} style={{ fontWeight: '700', color: boldColor }}>
+        {part.slice(2, -2)}
+      </Text>
+    ) : (
+      part
+    )
+  );
+}
+
+/**
+ * The GitHub release notes, with the bits of Markdown they use: "#"/"##" headings,
+ * "-"/"*" bullets and **bold**. Anything else shows as plain text.
+ */
+const ReleaseNotes: React.FC<{ notes: string; textColor: string; headingColor: string }> = ({
+  notes,
+  textColor,
+  headingColor,
+}) => (
+  <View style={styles.notesList}>
+    {notes.split(/\r?\n/).map((raw, i) => {
+      const line = raw.trim();
+      if (!line) return <View key={i} style={styles.notesGap} />;
+      const heading = /^#{1,6}\s+(.*)$/.exec(line);
+      if (heading) {
+        return (
+          <Text key={i} style={[styles.notesHeading, { color: headingColor }]}>
+            {renderInline(heading[1], headingColor)}
+          </Text>
+        );
+      }
+      const bullet = /^[-*]\s+(.*)$/.exec(line);
+      if (bullet) {
+        return (
+          <View key={i} style={styles.notesBulletRow}>
+            <Text style={[styles.notesText, { color: textColor }]}>•</Text>
+            <Text style={[styles.notesText, styles.notesBulletText, { color: textColor }]}>
+              {renderInline(bullet[1], headingColor)}
+            </Text>
+          </View>
+        );
+      }
+      return (
+        <Text key={i} style={[styles.notesText, { color: textColor }]}>
+          {renderInline(line, headingColor)}
+        </Text>
+      );
+    })}
+  </View>
+);
+
 /** Checks GitHub for a newer release on launch and AppState resume, with in-app APK download + installer. */
 export const UpdatePrompt: React.FC = () => {
   const colorScheme = useColorScheme() ?? 'light';
@@ -215,12 +269,14 @@ export const UpdatePrompt: React.FC = () => {
 
               <Text style={[styles.title, { color: theme.text }]}>New Update Available</Text>
 
+              {/* Separate Text pieces: one Text with a nested bold part got clipped on Android ("21.8" without "MB"). */}
               <View style={[styles.versionPill, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder }]}>
-                <Text style={[styles.versionText, { color: theme.textSecondary }]}>
-                  v{installedVersion} {'->'}{' '}
-                  <Text style={{ color: '#6366F1', fontWeight: '800' }}>v{release.version}</Text>
-                  {sizeLabel ? `  |  ${sizeLabel}` : ''}
-                </Text>
+                <Text style={[styles.versionText, { color: theme.textSecondary }]}>v{installedVersion}</Text>
+                <Ionicons name="arrow-forward" size={12} color={theme.textSecondary} />
+                <Text style={[styles.versionText, styles.versionNew]}>v{release.version}</Text>
+                {sizeLabel ? (
+                  <Text style={[styles.versionText, { color: theme.textSecondary }]}>· {sizeLabel}</Text>
+                ) : null}
               </View>
 
               {release.notes ? (
@@ -228,7 +284,7 @@ export const UpdatePrompt: React.FC = () => {
                   style={[styles.notesBox, { backgroundColor: theme.inputBg, borderColor: theme.cardBorder }]}
                   contentContainerStyle={styles.notesContent}
                   showsVerticalScrollIndicator={true}>
-                  <Text style={[styles.notesText, { color: theme.textSecondary }]}>{release.notes}</Text>
+                  <ReleaseNotes notes={release.notes} textColor={theme.textSecondary} headingColor={theme.text} />
                 </ScrollView>
               ) : (
                 <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
@@ -361,6 +417,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   versionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     borderRadius: 999,
     borderWidth: 1,
     paddingHorizontal: 12,
@@ -370,6 +429,28 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: 13,
     fontWeight: '600',
+  },
+  versionNew: {
+    color: '#6366F1',
+    fontWeight: '800',
+  },
+  notesList: {
+    gap: 2,
+  },
+  notesGap: {
+    height: 6,
+  },
+  notesHeading: {
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  notesBulletRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  notesBulletText: {
+    flex: 1,
   },
   notesBox: {
     width: '100%',

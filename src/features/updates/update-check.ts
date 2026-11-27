@@ -1,12 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
-import {
-  cacheDirectory,
-  createDownloadResumable,
-  deleteAsync,
-  getContentUriAsync,
-  type DownloadResumable,
-} from 'expo-file-system/legacy';
+// The newer File API: its download task reports progress reliably (the legacy
+// createDownloadResumable never delivered progress events on device).
+import { File, Paths, type DownloadTask } from 'expo-file-system';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { Linking, Platform } from 'react-native';
 
@@ -106,17 +102,15 @@ export function formatMegabytes(bytes: number | null | undefined): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function getApkFileUri(): string | null {
-  if (!cacheDirectory) return null;
-  return `${cacheDirectory}${UPDATE_APK_FILENAME}`;
+function getApkFile(): File {
+  return new File(Paths.cache, UPDATE_APK_FILENAME);
 }
 
 export async function cleanupDownloadedUpdateApk(): Promise<void> {
   if (Platform.OS === 'web') return;
-  const uri = getApkFileUri();
-  if (!uri) return;
   try {
-    await deleteAsync(uri, { idempotent: true });
+    const file = getApkFile();
+    if (file.exists) file.delete();
   } catch {
     // Best-effort cleanup
   }
@@ -268,7 +262,7 @@ export function createApkUpdateDownloader(
   release: ReleaseInfo,
   onProgress: (progress: DownloadProgress) => void
 ): UpdateDownloadController {
-  let resumable: DownloadResumable | null = null;
+  let task: DownloadTask | null = null;
   let cancelled = false;
 
   const start = async () => {
@@ -277,43 +271,46 @@ export function createApkUpdateDownloader(
       return;
     }
 
-    const destUri = getApkFileUri();
-    if (!destUri) {
-      throw new Error('Device cache directory is unavailable.');
-    }
-
     await cleanupDownloadedUpdateApk();
 
-    resumable = createDownloadResumable(release.apkUrl, destUri, {}, (data) => {
-      if (cancelled) return;
-      const expected =
-        data.totalBytesExpectedToWrite > 0 ? data.totalBytesExpectedToWrite : release.sizeBytes ?? 0;
-      const fraction = expected > 0 ? Math.min(1, Math.max(0, data.totalBytesWritten / expected)) : 0;
-      onProgress({
-        writtenBytes: data.totalBytesWritten,
-        totalBytes: expected,
-        fraction,
-      });
+    // Size the server reports for this download. Preferred over release.sizeBytes, which
+    // may be cached from an earlier check (stale if the release APK was replaced since).
+    let serverTotalBytes = 0;
+
+    task = File.createDownloadTask(release.apkUrl, getApkFile(), {
+      onProgress: ({ bytesWritten, totalBytes }) => {
+        // Keep the first value (the Content-Length): the final native event reports total = written.
+        if (totalBytes > 0 && serverTotalBytes === 0) serverTotalBytes = totalBytes;
+        if (cancelled) return;
+        const expected = totalBytes > 0 ? totalBytes : release.sizeBytes ?? 0;
+        const fraction = expected > 0 ? Math.min(1, Math.max(0, bytesWritten / expected)) : 0;
+        onProgress({ writtenBytes: bytesWritten, totalBytes: expected, fraction });
+      },
     });
 
-    const result = await resumable.downloadAsync();
-    if (cancelled) {
+    let downloaded: File | null;
+    try {
+      // Rejects on network errors and non-2xx responses.
+      downloaded = await task.downloadAsync();
+    } catch (err) {
+      await cleanupDownloadedUpdateApk();
+      if (cancelled) return;
+      console.warn('Update download failed', err);
+      throw new Error('Download failed. Check your internet connection and try again.');
+    }
+    if (cancelled || !downloaded) {
       await cleanupDownloadedUpdateApk();
       return;
     }
 
-    if (!result || !result.uri) {
-      throw new Error('Download did not complete.');
-    }
-
-    if (result.status && (result.status < 200 || result.status >= 300)) {
+    // A cut-off download would make Android's installer fail with "problem parsing the package".
+    if (serverTotalBytes > 0 && downloaded.size !== serverTotalBytes) {
       await cleanupDownloadedUpdateApk();
-      throw new Error(`Download failed with HTTP ${result.status}.`);
+      throw new Error('The download was incomplete. Please try again.');
     }
 
-    const contentUri = await getContentUriAsync(result.uri);
     await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
-      data: contentUri,
+      data: downloaded.contentUri,
       type: 'application/vnd.android.package-archive',
       flags: 1 | 268435456, // FLAG_GRANT_READ_URI_PERMISSION | FLAG_ACTIVITY_NEW_TASK
     });
@@ -322,7 +319,7 @@ export function createApkUpdateDownloader(
   const cancel = async () => {
     cancelled = true;
     try {
-      await resumable?.cancelAsync();
+      task?.cancel();
     } catch {
       // Ignore cancel errors if download already ended
     }
