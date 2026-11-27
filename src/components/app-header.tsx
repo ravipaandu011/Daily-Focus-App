@@ -22,13 +22,15 @@ interface AppHeaderProps {
   iconSize?: number;
   /** Which list the Recycle Bin opens on. */
   binTab?: 'tasks' | 'notes';
+  /** When set, a search button is shown before the theme toggle. */
+  onSearch?: () => void;
 }
 
 /**
  * The "Daily Focus" header shared by the Todo and Notes tabs: badge, title, theme toggle,
  * and the Settings button (Settings, Backup & Restore, and the Recycle Bin open from here).
  */
-export const AppHeader: React.FC<AppHeaderProps> = ({ icon, iconSize = 17, binTab = 'tasks' }) => {
+export const AppHeader: React.FC<AppHeaderProps> = ({ icon, iconSize = 17, binTab = 'tasks', onSearch }) => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = Colors[colorScheme];
@@ -68,6 +70,20 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ icon, iconSize = 17, binTa
         </View>
 
         <View style={styles.headerRightActions}>
+          {onSearch && (
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Search"
+              activeOpacity={0.75}
+              onPress={() => {
+                if (Platform.OS !== 'web') Haptics.selectionAsync();
+                onSearch();
+              }}
+              style={[styles.headerIconBtn, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+              <Ionicons name="search" size={15} color={theme.text} />
+            </TouchableOpacity>
+          )}
+
           {/* Dark / Light theme toggle */}
           <TouchableOpacity
             accessibilityRole="button"
@@ -108,6 +124,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ icon, iconSize = 17, binTa
         />
       )}
 
+      {/* Rendered after Settings so it opens on top of it. */}
       {binVisible && (
         <RecycleBinModal
           visible={binVisible}

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import {
+  ActivityIndicator,
   Alert,
+  Linking,
   Modal,
   View,
   Text,
@@ -23,6 +25,8 @@ import { TodoItem } from "@/features/tasks/types";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { generateBackupJson, parseAndValidateBackup } from "@/features/settings/backup";
+import { openBackupFile, saveBackupToFile } from "@/features/settings/backup-file";
+import { checkForUpdate, getCurrentVersion, UpdateCheckResult } from "@/features/updates/update-check";
 import {
   getReminderSettings,
   setDailyReminder,
@@ -32,6 +36,7 @@ import { useAuth } from "@/features/auth/auth-context";
 import { useNotes } from "@/features/notes/notes-context";
 import { NoteItem } from "@/features/notes/types";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { DeleteAccountModal } from "@/features/auth/components/delete-account-modal";
 import { TimePickerModal } from "@/components/time-picker-modal";
 
 interface SettingsBackupModalProps {
@@ -72,6 +77,10 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
     .join(" and ");
 
   const [copiedBackup, setCopiedBackup] = useState(false);
+  const [savingBackup, setSavingBackup] = useState(false);
+  const [deleteAccountVisible, setDeleteAccountVisible] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateResult, setUpdateResult] = useState<UpdateCheckResult | null>(null);
   const [importModalVisible, setImportModalVisible] = useState(false);
   const [importJsonText, setImportJsonText] = useState("");
   const [importError, setImportError] = useState<string | null>(null);
@@ -190,7 +199,52 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
 
   const backupJson = generateBackupJson(todos, binTodos, notes);
 
-  const handleExportBackup = async () => {
+  /** Saves the backup as a .json file in a folder the user picks (Android). */
+  const handleSaveBackupFile = async () => {
+    if (Platform.OS !== "android") {
+      // Folder picking is Android-only; elsewhere fall back to sharing the text.
+      handleShareBackupText();
+      return;
+    }
+    Haptics.selectionAsync();
+    setSavingBackup(true);
+    const result = await saveBackupToFile(backupJson);
+    setSavingBackup(false);
+    if (result.status === "saved") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Backup saved", `Saved as ${result.fileName}. Keep it somewhere safe, or copy it to your new phone.`);
+    } else if (result.status === "error") {
+      Alert.alert("Couldn't save backup", result.message);
+    }
+  };
+
+  /** Picks a backup file and goes straight to the restore confirmation. */
+  const handleOpenBackupFile = async () => {
+    if (Platform.OS !== "web") Haptics.selectionAsync();
+    const result = await openBackupFile();
+    if (result.status === "canceled") return;
+    if (result.status === "error") {
+      Alert.alert("Couldn't open backup", result.message);
+      return;
+    }
+    const parsed = parseAndValidateBackup(result.text);
+    if (!parsed.success) {
+      Alert.alert("Not a Daily Focus backup", `That file couldn't be restored.\n\n${parsed.error}`);
+      return;
+    }
+    setPendingRestoreData(parsed.data);
+    setRestoreConfirmVisible(true);
+  };
+
+  const handleCheckForUpdate = async () => {
+    if (Platform.OS !== "web") Haptics.selectionAsync();
+    setCheckingUpdate(true);
+    setUpdateResult(null);
+    setUpdateResult(await checkForUpdate());
+    setCheckingUpdate(false);
+  };
+
+  const handleShareBackupText = async () => {
     await Clipboard.setStringAsync(backupJson);
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -382,6 +436,21 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
                     Sign Out & Lock Data
                   </Text>
                 </TouchableOpacity>
+
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Delete account"
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  onPress={() => {
+                    if (Platform.OS !== "web") Haptics.selectionAsync();
+                    setDeleteAccountVisible(true);
+                  }}
+                  style={styles.deleteAccountLink}
+                >
+                  <Text style={[styles.textLink, { color: theme.textSecondary }]}>
+                    Delete account
+                  </Text>
+                </TouchableOpacity>
               </View>
             ) : null}
           </View>
@@ -563,7 +632,8 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
               accessibilityLabel="Open Recycle Bin"
               activeOpacity={0.75}
               onPress={() => {
-                onClose();
+                // Open the bin on top of Settings (closing Settings first showed the home
+                // screen through the bin while it faded in). Closing the bin returns here.
                 onOpenBin?.();
               }}
               style={{
@@ -620,16 +690,17 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
               </View>
             </View>
             <Text style={[styles.sectionDesc, { color: theme.textSecondary }]}>
-              Export your tasks and notes into a JSON file to transfer between
-              devices, or restore an existing backup.
+              Save your tasks and notes as a backup file, or restore one, for
+              example when moving to a new phone.
             </Text>
 
             <View style={styles.actionsRow}>
               <TouchableOpacity
                 accessibilityRole="button"
-                accessibilityLabel="Export backup"
+                accessibilityLabel="Save backup file"
                 activeOpacity={0.75}
-                onPress={handleExportBackup}
+                disabled={savingBackup}
+                onPress={handleSaveBackupFile}
                 style={[
                   styles.actionBtn,
                   {
@@ -638,23 +709,21 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
                   },
                 ]}
               >
-                <Ionicons
-                  name={
-                    copiedBackup ? "checkmark-circle" : "cloud-upload-outline"
-                  }
-                  size={15}
-                  color="#10B981"
-                />
+                {savingBackup ? (
+                  <ActivityIndicator size="small" color="#10B981" />
+                ) : (
+                  <Ionicons name="save-outline" size={15} color="#10B981" />
+                )}
                 <Text style={[styles.actionBtnText, { color: "#10B981" }]}>
-                  {copiedBackup ? "JSON Copied!" : "Export JSON"}
+                  Save Backup
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 accessibilityRole="button"
-                accessibilityLabel="Restore backup"
+                accessibilityLabel="Restore backup from a file"
                 activeOpacity={0.75}
-                onPress={handleOpenImport}
+                onPress={handleOpenBackupFile}
                 style={[
                   styles.actionBtn,
                   {
@@ -669,10 +738,110 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
                   color={theme.text}
                 />
                 <Text style={[styles.actionBtnText, { color: theme.text }]}>
-                  Import JSON
+                  Restore Backup
                 </Text>
               </TouchableOpacity>
             </View>
+
+            {/* Text backups: sending one in a message, and restoring older (v2.0.0) backups */}
+            <View style={styles.textLinksRow}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Share backup as text"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                onPress={handleShareBackupText}
+              >
+                <Text style={[styles.textLink, { color: theme.textSecondary }]}>
+                  {copiedBackup ? "Copied!" : "Share as text"}
+                </Text>
+              </TouchableOpacity>
+              <Text style={[styles.textLink, { color: theme.textMuted }]}>·</Text>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Restore by pasting backup text"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                onPress={handleOpenImport}
+              >
+                <Text style={[styles.textLink, { color: theme.textSecondary }]}>
+                  Paste backup text
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* App Version & Updates */}
+          <View
+            style={[
+              styles.sectionCard,
+              { backgroundColor: theme.card, borderColor: theme.cardBorder },
+            ]}
+          >
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionTitleRow}>
+                <Ionicons name="information-circle-outline" size={18} color="#3B82F6" />
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>
+                  App Version
+                </Text>
+              </View>
+              <Text style={[styles.versionText, { color: theme.textSecondary }]}>
+                {getCurrentVersion()}
+              </Text>
+            </View>
+
+            {updateResult?.status === "available" ? (
+              <>
+                <Text style={[styles.sectionDesc, { color: theme.text }]}>
+                  Version {updateResult.release.version} is available.
+                </Text>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel={`Download version ${updateResult.release.version}`}
+                  activeOpacity={0.8}
+                  onPress={() => Linking.openURL(updateResult.release.url).catch(() => {})}
+                  style={[styles.actionBtn, { backgroundColor: "#3B82F6", flex: 0 }]}
+                >
+                  <Ionicons name="arrow-down-circle-outline" size={16} color="#FFFFFF" />
+                  <Text style={[styles.actionBtnText, { color: "#FFFFFF" }]}>
+                    Download Update
+                  </Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                {updateResult && (
+                  <Text
+                    style={[
+                      styles.sectionDesc,
+                      { color: updateResult.status === "error" ? "#EF4444" : theme.textSecondary },
+                    ]}
+                  >
+                    {updateResult.status === "error"
+                      ? updateResult.message
+                      : "You have the latest version."}
+                  </Text>
+                )}
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Check for updates"
+                  activeOpacity={0.75}
+                  disabled={checkingUpdate}
+                  onPress={handleCheckForUpdate}
+                  style={[
+                    styles.actionBtn,
+                    { backgroundColor: colorScheme === "dark" ? "#1E293B" : "#EFF6FF", flex: 0 },
+                  ]}
+                >
+                  {checkingUpdate ? (
+                    <ActivityIndicator size="small" color="#3B82F6" />
+                  ) : (
+                    <Ionicons name="refresh-outline" size={15} color="#3B82F6" />
+                  )}
+                  <Text style={[styles.actionBtnText, { color: "#3B82F6" }]}>
+                    {checkingUpdate ? "Checking…" : "Check for Updates"}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </ScrollView>
 
@@ -772,6 +941,15 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
           onCancel={() => {
             setRestoreConfirmVisible(false);
             setPendingRestoreData(null);
+          }}
+        />
+
+        <DeleteAccountModal
+          visible={deleteAccountVisible}
+          onClose={() => setDeleteAccountVisible(false)}
+          onDeleted={() => {
+            setDeleteAccountVisible(false);
+            onClose();
           }}
         />
 
@@ -934,6 +1112,25 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
   },
   actionBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  textLinksRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 12,
+  },
+  textLink: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  deleteAccountLink: {
+    alignSelf: "center",
+    marginTop: 6,
+  },
+  versionText: {
     fontSize: 13,
     fontWeight: "700",
   },

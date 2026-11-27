@@ -13,6 +13,7 @@ import { NotesProvider } from '@/features/notes/notes-context';
 import { AuthScreen } from '@/features/auth/components/auth-screen';
 import { Colors } from '@/constants/theme';
 import { setupNotificationChannel } from '@/utils/notifications';
+import { UpdatePrompt } from '@/features/updates/update-prompt';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -56,6 +57,7 @@ function RootNavigation() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
+      <UpdatePrompt />
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>
   );

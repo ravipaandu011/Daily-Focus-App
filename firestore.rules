@@ -1,0 +1,24 @@
+rules_version = '2';
+
+// Daily Focus stores each user's data under users/{uid}/todos and users/{uid}/notes.
+// Deploy with: npx firebase-tools deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Tasks and notes: only the signed-in owner can read, write or delete them.
+    match /users/{userId}/{collection}/{docId} {
+      allow read, delete: if isOwner(userId) && collection in ['todos', 'notes'];
+
+      // The app always writes user_id; it must match the owner so data can't be filed under someone else.
+      allow create, update: if isOwner(userId)
+        && collection in ['todos', 'notes']
+        && request.resource.data.user_id == userId;
+    }
+
+    // Everything else is closed.
+  }
+}

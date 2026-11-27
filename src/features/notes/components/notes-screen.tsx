@@ -1,10 +1,12 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  BackHandler,
   FlatList,
   Platform,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -26,8 +28,16 @@ import { EmptyState } from '@/components/empty-state';
 import { DateNavigator } from '@/components/date-navigator';
 import { CalendarModal } from '@/components/calendar-modal';
 import { TODO_CONFIG } from '@/constants/sections';
-import { getTodayKey } from '@/utils/date';
+import { formatDateForDisplay, getTodayKey } from '@/utils/date';
 import { copyNote, shareNote } from '@/features/notes/note-share';
+import { searchNotes } from '@/features/notes/note-search';
+
+/** "Today • Fri, Nov 27", with the year added for other years. */
+function formatResultDay(dateKey: string): string {
+  const label = formatDateForDisplay(dateKey);
+  const year = dateKey.slice(0, 4);
+  return year === getTodayKey().slice(0, 4) ? label : `${label}, ${year}`;
+}
 
 type Row =
   | { type: 'header'; key: string; label: string }
@@ -47,6 +57,19 @@ export const NotesScreen: React.FC = () => {
   const [actionNote, setActionNote] = useState<NoteItem | null>(null);
   const [movingNote, setMovingNote] = useState<NoteItem | null>(null);
   const [deletedNote, setDeletedNote] = useState<NoteItem | null>(null);
+  // null = search closed; a string (even empty) = search open with that text.
+  const [searchQuery, setSearchQuery] = useState<string | null>(null);
+  const isSearching = searchQuery !== null;
+
+  // Android back closes the search first.
+  useEffect(() => {
+    if (!isSearching) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setSearchQuery(null);
+      return true;
+    });
+    return () => sub.remove();
+  }, [isSearching]);
 
   const dayNotes = useMemo(() => notes.filter((n) => n.date === selectedDate), [notes, selectedDate]);
 
@@ -59,7 +82,21 @@ export const NotesScreen: React.FC = () => {
     return colors;
   }, [notes]);
 
-  const rows = useMemo<Row[]>(() => {
+  const searchRows = useMemo<Row[]>(() => {
+    if (!searchQuery?.trim()) return [];
+    const out: Row[] = [];
+    let lastDate = '';
+    for (const note of searchNotes(notes, searchQuery)) {
+      if (note.date !== lastDate) {
+        out.push({ type: 'header', key: `h_${note.date}`, label: formatResultDay(note.date) });
+        lastDate = note.date;
+      }
+      out.push({ type: 'note', key: note.id, note });
+    }
+    return out;
+  }, [notes, searchQuery]);
+
+  const dayRows = useMemo<Row[]>(() => {
     const pinned = dayNotes.filter((n) => n.pinned);
     const others = dayNotes.filter((n) => !n.pinned);
     const toRows = (list: NoteItem[]): Row[] => list.map((note) => ({ type: 'note', key: note.id, note }));
@@ -70,6 +107,8 @@ export const NotesScreen: React.FC = () => {
       ...(others.length > 0 ? [{ type: 'header', key: 'h_others', label: 'Others' } as Row, ...toRows(others)] : []),
     ];
   }, [dayNotes]);
+
+  const rows = isSearching ? searchRows : dayRows;
 
   const handleNewNote = () => {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -121,19 +160,43 @@ export const NotesScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <AppHeader icon="document-text" binTab="notes" />
+      <AppHeader icon="document-text" binTab="notes" onSearch={() => setSearchQuery((q) => q ?? '')} />
 
-      {/* Day scroller + month label (tap the calendar icon for the month view) */}
-      <DateNavigator
-        selectedDate={selectedDate}
-        sectionConfig={TODO_CONFIG}
-        dotColors={dotColors}
-        onSelectDate={setSelectedDate}
-        onOpenCalendar={() => {
-          if (Platform.OS !== 'web') Haptics.selectionAsync();
-          setCalendarVisible(true);
-        }}
-      />
+      {isSearching ? (
+        /* Search bar: searches every day's notes */
+        <View style={[styles.searchBar, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder }]}>
+          <Ionicons name="search" size={16} color={theme.textSecondary} />
+          <TextInput
+            autoFocus
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search all notes"
+            placeholderTextColor={theme.textMuted}
+            returnKeyType="search"
+            autoCorrect={false}
+            style={[styles.searchInput, { color: theme.text }]}
+          />
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Close search"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            onPress={() => setSearchQuery(null)}>
+            <Ionicons name="close-circle" size={18} color={theme.textSecondary} />
+          </TouchableOpacity>
+        </View>
+      ) : (
+        /* Day scroller + month label (tap the calendar icon for the month view) */
+        <DateNavigator
+          selectedDate={selectedDate}
+          sectionConfig={TODO_CONFIG}
+          dotColors={dotColors}
+          onSelectDate={setSelectedDate}
+          onOpenCalendar={() => {
+            if (Platform.OS !== 'web') Haptics.selectionAsync();
+            setCalendarVisible(true);
+          }}
+        />
+      )}
 
       {isLoading && notes.length === 0 ? (
         <View style={styles.centered}>
@@ -147,12 +210,29 @@ export const NotesScreen: React.FC = () => {
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={[styles.listContent, { paddingBottom: dock.contentInset }, rows.length === 0 && styles.listEmpty]}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
+          keyboardDismissMode="on-drag"
           ListEmptyComponent={
-            <EmptyState
-              icon="document-text-outline"
-              title="No notes for this day"
-              subtitle="Tap the + button to write a note for this day. Notes save automatically."
-            />
+            isSearching ? (
+              searchQuery.trim() ? (
+                <EmptyState
+                  icon="search-outline"
+                  title="No matching notes"
+                  subtitle="Try fewer or different words. Search looks at note titles and text on every day."
+                />
+              ) : (
+                <EmptyState
+                  icon="search-outline"
+                  title="Search your notes"
+                  subtitle="Type a word to find it in any note, on any day."
+                />
+              )
+            ) : (
+              <EmptyState
+                icon="document-text-outline"
+                title="No notes for this day"
+                subtitle="Tap the + button to write a note for this day. Notes save automatically."
+              />
+            )
           }
         />
       )}
@@ -238,6 +318,23 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 4,
+    marginBottom: 12,
+    paddingHorizontal: 14,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    paddingVertical: 0,
   },
   listContent: {
     paddingHorizontal: 16,

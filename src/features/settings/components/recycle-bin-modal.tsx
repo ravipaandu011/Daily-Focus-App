@@ -400,7 +400,8 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({
   return (
     <Modal
       visible={visible}
-      animationType={Platform.OS === 'ios' ? 'slide' : 'fade'}
+      // No fade on Android: the bin opens and closes instantly over Settings.
+      animationType={Platform.OS === 'ios' ? 'slide' : 'none'}
       presentationStyle="pageSheet"
       statusBarTranslucent={true}
       onRequestClose={handleClose}>
