@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Linking,
   Modal,
   View,
   Text,
@@ -26,7 +25,7 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { generateBackupJson, parseAndValidateBackup } from "@/features/settings/backup";
 import { openBackupFile, saveBackupToFile } from "@/features/settings/backup-file";
-import { checkForUpdate, getCurrentVersion, UpdateCheckResult } from "@/features/updates/update-check";
+import { checkForUpdate, getCurrentVersion, triggerUpdateModal, UpdateCheckResult } from "@/features/updates/update-check";
 import {
   getReminderSettings,
   setDailyReminder,
@@ -797,7 +796,10 @@ export const SettingsBackupModal: React.FC<SettingsBackupModalProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel={`Download version ${updateResult.release.version}`}
                   activeOpacity={0.8}
-                  onPress={() => Linking.openURL(updateResult.release.url).catch(() => {})}
+                  onPress={() => {
+                    onClose();
+                    triggerUpdateModal(updateResult.release);
+                  }}
                   style={[styles.actionBtn, { backgroundColor: "#3B82F6", flex: 0 }]}
                 >
                   <Ionicons name="arrow-down-circle-outline" size={16} color="#FFFFFF" />

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Daily Focus",
     "slug": "Personal-To-DO-App",
-    "version": "2.0.2",
+    "version": "2.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "dailyfocus",
@@ -22,10 +22,11 @@
       "permissions": [
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.REQUEST_INSTALL_PACKAGES",
         "android.permission.SCHEDULE_EXACT_ALARM",
         "android.permission.VIBRATE"
       ],
-      "versionCode": 4
+      "versionCode": 5
     },
     "web": {
       "output": "static",

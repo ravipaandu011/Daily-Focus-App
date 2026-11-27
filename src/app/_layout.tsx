@@ -57,7 +57,6 @@ function RootNavigation() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
-      <UpdatePrompt />
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>
   );
@@ -70,6 +69,7 @@ export default function RootLayout() {
         <TodoProvider>
           <NotesProvider>
             <RootNavigation />
+            <UpdatePrompt />
           </NotesProvider>
         </TodoProvider>
       </AuthProvider>
